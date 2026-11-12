@@ -234,6 +234,9 @@ class IncrementalOptionsUpdater:
                 if status == "saved":
                     saved_count += 1
                     affected_years.add(d.year)
+                elif status == "not_ready":
+                    logger.info("Session %s for %s is not yet available from ThetaData; will retry on next run.", d, sym)
+                    break
 
             # Re-consolidate days that did save. The failed session is not in those files.
             if cfg.consolidate_yearly and affected_years:

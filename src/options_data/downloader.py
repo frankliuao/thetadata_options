@@ -63,6 +63,10 @@ INDEX_ROOTS: frozenset[str] = frozenset(
     {"SPX", "SPXW", "XSP", "NDX", "NDXP", "XND", "RUT", "RUTW", "VIX", "VIXW", "DJX", "XEO"}
 )
 
+class CurrentDayNotReadyError(Exception):
+    """Raised when requesting current-day EOD data before market close or report generation."""
+
+
 def nyse_today() -> datetime.date:
     """Session calendar date. ThetaData EOD is stamped in America/New_York, not UTC."""
     return datetime.datetime.now(ZoneInfo("America/New_York")).date()
@@ -385,7 +389,7 @@ class ThetaOptionsDownloader:
                 self._reauthenticate(force=True)
                 raise rpc_err
             if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in str(rpc_err.details()):
-                raise RuntimeError(
+                raise CurrentDayNotReadyError(
                     f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {rpc_err.details()}"
                 )
             raise rpc_err
@@ -407,7 +411,7 @@ class ThetaOptionsDownloader:
                         self._reauthenticate(force=True)
                         raise rpc_err
                     if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in str(rpc_err.details()):
-                        raise RuntimeError(
+                        raise CurrentDayNotReadyError(
                             f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {rpc_err.details()}"
                         )
                     raise rpc_err
@@ -486,7 +490,11 @@ class ThetaOptionsDownloader:
                 except Exception as read_err:
                     logger.debug("Could not verify %s in %s: %s", trade_date, proc_path, read_err)
 
-        df = self._fetch_single_day_options(symbol, trade_date)
+        try:
+            df = self._fetch_single_day_options(symbol, trade_date)
+        except CurrentDayNotReadyError:
+            return (trade_date, 0, "not_ready")
+
         if df.is_empty():
             today_et = datetime.datetime.now(ZoneInfo("America/New_York")).date()
             if trade_date < today_et:
@@ -521,15 +529,15 @@ class ThetaOptionsDownloader:
             try:
                 existing_scan = pl.scan_parquet(str(out_path))
                 cols = existing_scan.collect_schema().names()
-                date_col = "trade_date" if "trade_date" in cols else ("date" if "date" in cols else None)
+                date_col = "created" if "created" in cols else ("trade_date" if "trade_date" in cols else ("date" if "date" in cols else None))
                 if date_col:
                     latest_existing = existing_scan.select(pl.col(date_col).max()).collect().item()
                     if latest_existing is not None:
                         if isinstance(latest_existing, str):
-                            latest_existing = datetime.date.fromisoformat(latest_existing)
+                            latest_existing = datetime.date.fromisoformat(latest_existing[:10])
                         elif isinstance(latest_existing, datetime.datetime):
                             latest_existing = latest_existing.date()
-                        if start_date is None and latest_existing < fetch_start:
+                        if latest_existing < fetch_start:
                             fetch_start = latest_existing
             except Exception as exc:
                 logger.debug("Could not inspect existing underlying EOD file for %s: %s", sym, exc)

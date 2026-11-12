@@ -784,7 +784,7 @@ class MockCliTests(unittest.TestCase):
             old_date = datetime.date(2023, 6, 1)
             pl.DataFrame({
                 "symbol": ["SPY"],
-                "trade_date": [old_date],
+                "created": ["2023-06-01 16:00:00"],
                 "close": [420.0],
             }).write_parquet(und_dir / "SPY_eod.parquet")
 
@@ -798,10 +798,45 @@ class MockCliTests(unittest.TestCase):
             mock_client = unittest.mock.MagicMock()
             mock_client.stock_history_eod.return_value = pl.DataFrame()
             dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
-            dl.download_underlying_eod("SPY")
+            dl.download_underlying_eod("SPY", start_date=datetime.date(2024, 1, 1))
 
             call_args = mock_client.stock_history_eod.call_args
             self.assertEqual(call_args.kwargs["start_date"], old_date)
+
+    def test_one_sided_date_queries_read_all_years(self) -> None:
+        """query_chain with only start_date must not restrict scan to start_date.year alone."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            raw_2024 = root / "raw" / "options_eod" / "symbol=SPY" / "year=2024"
+            raw_2025 = root / "raw" / "options_eod" / "symbol=SPY" / "year=2025"
+            raw_2024.mkdir(parents=True, exist_ok=True)
+            raw_2025.mkdir(parents=True, exist_ok=True)
+
+            df_2024 = pl.DataFrame({
+                "symbol": ["SPY"],
+                "trade_date": [datetime.date(2024, 12, 30)],
+                "expiration": [datetime.date(2025, 1, 17)],
+                "strike": [500.0],
+                "right": ["call"],
+                "bid": [2.0],
+                "ask": [2.2],
+            })
+            df_2025 = pl.DataFrame({
+                "symbol": ["SPY"],
+                "trade_date": [datetime.date(2025, 1, 6)],
+                "expiration": [datetime.date(2025, 1, 17)],
+                "strike": [600.0],
+                "right": ["call"],
+                "bid": [3.0],
+                "ask": [3.2],
+            })
+            df_2024.write_parquet(raw_2024 / "SPY_2024-12-30.parquet")
+            df_2025.write_parquet(raw_2025 / "SPY_2025-01-06.parquet")
+
+            loader = OptionsDataLoader(data_dir=root)
+            res = loader.query_chain("SPY", start_date=datetime.date(2024, 12, 1))
+            self.assertEqual(res.height, 2)
+            self.assertEqual(res["trade_date"].to_list(), [datetime.date(2024, 12, 30), datetime.date(2025, 1, 6)])
 
 
 if __name__ == "__main__":

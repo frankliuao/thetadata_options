@@ -209,10 +209,6 @@ class OptionsDataLoader:
         query_years: list[int] | None = None
         if start_date is not None and end_date is not None:
             query_years = list(range(start_date.year, end_date.year + 1))
-        elif start_date is not None:
-            query_years = [start_date.year]
-        elif end_date is not None:
-            query_years = [end_date.year]
 
         lf = self.scan_symbol(sym, years=query_years)
 
