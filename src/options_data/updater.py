@@ -29,13 +29,14 @@ console = Console()
 logger = logging.getLogger(__name__)
 
 
-def find_latest_downloaded_date(data_dir: Path, symbol: str) -> datetime.date | None:
+def find_latest_downloaded_date(data_dir: str | Path, symbol: str) -> datetime.date | None:
     """Find the most recent downloaded trade_date for a symbol by scanning raw and processed Parquet files."""
     sym = symbol.upper()
     latest_date: datetime.date | None = None
+    data_path = Path(data_dir)
 
     # 1. Search raw daily Parquet files (search backwards from the most recent year folder)
-    sym_raw_dir = data_dir / "raw" / "options_eod" / f"symbol={sym}"
+    sym_raw_dir = data_path / "raw" / "options_eod" / f"symbol={sym}"
     if sym_raw_dir.exists():
         year_dirs = sorted(sym_raw_dir.glob("year=*"), reverse=True)
         for yd in year_dirs:
@@ -54,7 +55,7 @@ def find_latest_downloaded_date(data_dir: Path, symbol: str) -> datetime.date | 
                 break
 
     # 2. Check processed yearly Parquet files (works even if raw files are absent or partial)
-    sym_proc_dir = data_dir / "processed" / "options_eod" / f"symbol={sym}"
+    sym_proc_dir = data_path / "processed" / "options_eod" / f"symbol={sym}"
     if sym_proc_dir.exists():
         proc_files = sorted(sym_proc_dir.glob(f"{sym}_*.parquet"), reverse=True)
         for pf in proc_files:
@@ -101,6 +102,7 @@ class IncrementalOptionsUpdater:
 
         # 1. Determine each symbol's starting date and find the global earliest start
         symbol_info: dict[str, tuple[datetime.date | None, str | None]] = {}
+        sym_covered_dates: dict[str, set[datetime.date]] = {}
         valid_starts: list[datetime.date] = []
 
         for raw_sym in cfg.symbols:
@@ -165,6 +167,7 @@ class IncrementalOptionsUpdater:
                         except Exception as exc:
                             logger.debug("Could not verify internal gaps for %s: %s", sym, exc)
 
+                    sym_covered_dates[sym] = covered_dates
                     if latest_d >= end_date and st > end_date:
                         symbol_info[sym] = (None, str(latest_d))
                     else:
@@ -193,9 +196,10 @@ class IncrementalOptionsUpdater:
                 else:
                     return ((sym, reason or "Current", 0, "Up-to-date"), 0)
 
-            # Missing trading days in [start_from, end_date]
+            # Missing trading days in [start_from, end_date] that are not already covered
+            sym_covered = sym_covered_dates.get(sym, set())
             missing_days = sorted(
-                [d for d in all_trading_days if start_from <= d <= end_date]
+                [d for d in all_trading_days if start_from <= d <= end_date and d not in sym_covered]
             )
 
             if not missing_days:
