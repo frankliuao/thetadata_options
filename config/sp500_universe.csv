@@ -1,0 +1,576 @@
+ticker,historical_ticker,company_name,sp500_status,trading_status,date_added_or_removed,notes,source_url
+A,A,Agilent Technologies,Current S&P 500,S&P 500 (Active),Added: 2000-06-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AAL,AAL,American Airlines Group,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: September 23 2024,Removed Sept 23 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+AAP,AAP,Advance Auto Parts,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: August 25 2023,Removed Aug 25 2023 (Replaced by Kenvue),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+AAPL,AAPL,Apple Inc.,Current S&P 500,S&P 500 (Active),Added: 1982-11-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ABBV,ABBV,AbbVie,Current S&P 500,S&P 500 (Active),Added: 2012-12-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ABNB,ABNB,Airbnb,Current S&P 500,S&P 500 (Active),Added: 2023-09-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ABT,ABT,Abbott Laboratories,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ACGL,ACGL,Arch Capital Group,Current S&P 500,S&P 500 (Active),Added: 2022-11-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ACN,ACN,Accenture,Current S&P 500,S&P 500 (Active),Added: 2011-07-06,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ADBE,ADBE,Adobe Inc.,Current S&P 500,S&P 500 (Active),Added: 1997-05-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ADI,ADI,Analog Devices,Current S&P 500,S&P 500 (Active),Added: 1999-10-12,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ADM,ADM,Archer Daniels Midland,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ADP,ADP,Automatic Data Processing,Current S&P 500,S&P 500 (Active),Added: 1981-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ADSK,ADSK,Autodesk,Current S&P 500,S&P 500 (Active),Added: 1989-12-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AEE,AEE,Ameren,Current S&P 500,S&P 500 (Active),Added: 1991-09-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AEP,AEP,American Electric Power,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AES,AES,AES Corporation,Current S&P 500,S&P 500 (Active),Added: 1998-10-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AFL,AFL,Aflac,Current S&P 500,S&P 500 (Active),Added: 1999-05-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AIG,AIG,American International Group,Current S&P 500,S&P 500 (Active),Added: 1980-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AIV,AIV,Aimco,Removed (Still Actively Trading),NYSE (Active),Removed: December 21 2020,Removed Dec 21 2020 (Spun off AIRC; Aimco still actively trading on NYSE),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+AIZ,AIZ,Assurant,Current S&P 500,S&P 500 (Active),Added: 2007-04-10,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AJG,AJG,Arthur J. Gallagher & Co.,Current S&P 500,S&P 500 (Active),Added: 2016-05-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AKAM,AKAM,Akamai Technologies,Current S&P 500,S&P 500 (Active),Added: 2007-07-12,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ALB,ALB,Albemarle Corporation,Current S&P 500,S&P 500 (Active),Added: 2016-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ALGN,ALGN,Align Technology,Current S&P 500,S&P 500 (Active),Added: 2017-06-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ALK,ALK,Alaska Air Group,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: December 18 2023,Removed Dec 18 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+ALL,ALL,Allstate,Current S&P 500,S&P 500 (Active),Added: 1995-07-13,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ALLE,ALLE,Allegion,Current S&P 500,S&P 500 (Active),Added: 2013-12-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMAT,AMAT,Applied Materials,Current S&P 500,S&P 500 (Active),Added: 1995-03-16,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMCR,AMCR,Amcor,Current S&P 500,S&P 500 (Active),Added: 2019-06-07,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMD,AMD,Advanced Micro Devices,Current S&P 500,S&P 500 (Active),Added: 2017-03-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AME,AME,Ametek,Current S&P 500,S&P 500 (Active),Added: 2013-09-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMGN,AMGN,Amgen,Current S&P 500,S&P 500 (Active),Added: 1992-01-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMP,AMP,Ameriprise Financial,Current S&P 500,S&P 500 (Active),Added: 2005-10-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMT,AMT,American Tower,Current S&P 500,S&P 500 (Active),Added: 2007-11-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AMTM,AMTM,Amentum,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 23 2024,Removed Dec 23 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+AMZN,AMZN,Amazon,Current S&P 500,S&P 500 (Active),Added: 2005-11-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ANET,ANET,Arista Networks,Current S&P 500,S&P 500 (Active),Added: 2018-08-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AON,AON,Aon plc,Current S&P 500,S&P 500 (Active),Added: 1996-04-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AOS,AOS,A. O. Smith,Current S&P 500,S&P 500 (Active),Added: 2017-07-26,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+APA,APA,APA Corporation,Current S&P 500,S&P 500 (Active),Added: 1997-07-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+APD,APD,Air Products,Current S&P 500,S&P 500 (Active),Added: 1985-04-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+APH,APH,Amphenol,Current S&P 500,S&P 500 (Active),Added: 2008-09-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+APO,APO,Apollo Global Management,Current S&P 500,S&P 500 (Active),Added: 2024-12-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+APP,APP,AppLovin,Current S&P 500,S&P 500 (Active),Added: 2025-09-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+APTV,APTV,Aptiv,Current S&P 500,S&P 500 (Active),Added: 2012-12-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ARE,ARE,Alexandria Real Estate Equities,Current S&P 500,S&P 500 (Active),Added: 2017-03-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ARES,ARES,Ares Management,Current S&P 500,S&P 500 (Active),Added: 2025-12-11,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ATO,ATO,Atmos Energy,Current S&P 500,S&P 500 (Active),Added: 2019-02-15,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AVGO,AVGO,Broadcom,Current S&P 500,S&P 500 (Active),Added: 2014-05-08,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AVY,AVY,Avery Dennison,Current S&P 500,S&P 500 (Active),Added: 1987-12-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AWK,AWK,American Water Works,Current S&P 500,S&P 500 (Active),Added: 2016-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AXON,AXON,Axon Enterprise,Current S&P 500,S&P 500 (Active),Added: 2023-05-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AXP,AXP,American Express,Current S&P 500,S&P 500 (Active),Added: 1976-06-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+AZO,AZO,AutoZone,Current S&P 500,S&P 500 (Active),Added: 1997-01-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BA,BA,Boeing,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BAC,BAC,Bank of America,Current S&P 500,S&P 500 (Active),Added: 1976-06-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BALL,BALL,Ball Corporation,Current S&P 500,S&P 500 (Active),Added: 1984-10-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BAX,BAX,Baxter International,Current S&P 500,S&P 500 (Active),Added: 1972-09-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BBWI,BBWI,Bath & Body Works Inc.,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: October 1 2024,Removed Oct 1 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+BBY,BBY,Best Buy,Current S&P 500,S&P 500 (Active),Added: 1999-06-29,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BDX,BDX,Becton Dickinson,Current S&P 500,S&P 500 (Active),Added: 1972-09-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BE,BE,Bloom Energy,Current S&P 500,S&P 500 (Active),Added: 2026-09-21,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BEN,BEN,Franklin Resources,Current S&P 500,S&P 500 (Active),Added: 1998-04-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BF.B,BF.B,Brown–Forman,Current S&P 500,S&P 500 (Active),Added: 1982-10-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BFH,ADS,Bread Financial Holdings (ex-Alliance Data Systems),Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 22 2020,Formerly ADS; renamed to BFH. Removed June 22 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+BG,BG,Bunge Global,Current S&P 500,S&P 500 (Active),Added: 2023-03-15,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BIIB,BIIB,Biogen,Current S&P 500,S&P 500 (Active),Added: 2003-11-13,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BIO,BIO,Bio-Rad Laboratories,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: September 23 2024,Removed Sept 23 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+BKNG,BKNG,Booking Holdings,Current S&P 500,S&P 500 (Active),Added: 2009-11-06,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BKR,BKR,Baker Hughes,Current S&P 500,S&P 500 (Active),Added: 2017-07-07,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BLDR,BLDR,Builders FirstSource,Removed (Still Actively Trading),NYSE (Active),Removed: September 21 2026,Removed Sept 21 2026 (Market cap change; actively trading on NYSE),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+BLK,BLK,BlackRock,Current S&P 500,S&P 500 (Active),Added: 2011-04-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BMY,BMY,Bristol Myers Squibb,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BNY,BNY,BNY Mellon,Current S&P 500,S&P 500 (Active),Added: 1995-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BR,BR,Broadridge Financial Solutions,Current S&P 500,S&P 500 (Active),Added: 2018-06-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BRK.B,BRK.B,Berkshire Hathaway,Current S&P 500,S&P 500 (Active),Added: 2010-02-16,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BRO,BRO,Brown & Brown,Current S&P 500,S&P 500 (Active),Added: 2021-09-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BSX,BSX,Boston Scientific,Current S&P 500,S&P 500 (Active),Added: 1995-02-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BWA,BWA,BorgWarner,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: March 24 2025,Removed March 24 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+BX,BX,Blackstone Inc.,Current S&P 500,S&P 500 (Active),Added: 2023-09-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+BXP,BXP,BXP Inc.,Current S&P 500,S&P 500 (Active),Added: 2006-04-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+C,C,Citigroup,Current S&P 500,S&P 500 (Active),Added: 1988-05-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CAG,CAG,Conagra Brands,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 30 2026,Removed June 30 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CAH,CAH,Cardinal Health,Current S&P 500,S&P 500 (Active),Added: 1997-05-27,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CARR,CARR,Carrier Global,Current S&P 500,S&P 500 (Active),Added: 2020-04-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CASY,CASY,Casey's,Current S&P 500,S&P 500 (Active),Added: 2026-04-09,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CAT,CAT,Caterpillar Inc.,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CB,CB,Chubb Limited,Current S&P 500,S&P 500 (Active),Added: 2010-07-15,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CBOE,CBOE,Cboe Global Markets,Current S&P 500,S&P 500 (Active),Added: 2017-03-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CBRE,CBRE,CBRE Group,Current S&P 500,S&P 500 (Active),Added: 2006-11-10,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CCI,CCI,Crown Castle,Current S&P 500,S&P 500 (Active),Added: 2012-03-14,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CCL,CCL,Carnival Corporation,Current S&P 500,S&P 500 (Active),Added: 1998-12-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CDNS,CDNS,Cadence Design Systems,Current S&P 500,S&P 500 (Active),Added: 2017-09-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CDW,CDW,CDW Corporation,Current S&P 500,S&P 500 (Active),Added: 2019-09-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CE,CE,Celanese,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 24 2025,Removed March 24 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CEG,CEG,Constellation Energy,Current S&P 500,S&P 500 (Active),Added: 2022-02-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CF,CF,CF Industries,Current S&P 500,S&P 500 (Active),Added: 2008-08-27,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CFG,CFG,Citizens Financial Group,Current S&P 500,S&P 500 (Active),Added: 2016-01-29,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CHD,CHD,Church & Dwight,Current S&P 500,S&P 500 (Active),Added: 2015-12-29,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CHRW,CHRW,C.H. Robinson,Current S&P 500,S&P 500 (Active),Added: 2007-03-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CHTR,CHTR,Charter Communications,Current S&P 500,S&P 500 (Active),Added: 2016-09-08,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CI,CI,Cigna,Current S&P 500,S&P 500 (Active),Added: 1976-06-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CIEN,CIEN,Ciena,Current S&P 500,S&P 500 (Active),Added: 2026-02-09,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CINF,CINF,Cincinnati Financial,Current S&P 500,S&P 500 (Active),Added: 1997-12-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CL,CL,Colgate-Palmolive,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CLX,CLX,Clorox,Current S&P 500,S&P 500 (Active),Added: 1969-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CMCSA,CMCSA,Comcast,Current S&P 500,S&P 500 (Active),Added: 2002-11-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CME,CME,CME Group,Current S&P 500,S&P 500 (Active),Added: 2006-08-11,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CMG,CMG,Chipotle Mexican Grill,Current S&P 500,S&P 500 (Active),Added: 2011-04-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CMI,CMI,Cummins,Current S&P 500,S&P 500 (Active),Added: 1965-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CMS,CMS,CMS Energy,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CNC,CNC,Centene Corporation,Current S&P 500,S&P 500 (Active),Added: 2016-03-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CNP,CNP,CenterPoint Energy,Current S&P 500,S&P 500 (Active),Added: 1985-07-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COF,COF,Capital One,Current S&P 500,S&P 500 (Active),Added: 1998-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COHR,COHR,Coherent Corp.,Current S&P 500,S&P 500 (Active),Added: 2026-03-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COIN,COIN,Coinbase,Current S&P 500,S&P 500 (Active),Added: 2025-05-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COO,COO,Cooper Companies (The),Current S&P 500,S&P 500 (Active),Added: 2016-09-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COP,COP,ConocoPhillips,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COR,COR,Cencora,Current S&P 500,S&P 500 (Active),Added: 2001-08-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COST,COST,Costco,Current S&P 500,S&P 500 (Active),Added: 1993-10-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+COTY,COTY,Coty,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 21 2020,Removed Sept 21 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CPAY,CPAY,Corpay,Current S&P 500,S&P 500 (Active),Added: 2018-06-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CPB,CPB,Campbell's,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 22 2026,Removed June 22 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CPRI,CPRI,Capri Holdings,Removed (Still Actively Trading),NYSE (Active),Removed: May 12 2020,Removed May 12 2020 (Market cap change; actively trading on NYSE),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CPRT,CPRT,Copart,Current S&P 500,S&P 500 (Active),Added: 2018-07-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CPT,CPT,Camden Property Trust,Current S&P 500,S&P 500 (Active),Added: 2022-04-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CRH,CRH,CRH plc,Current S&P 500,S&P 500 (Active),Added: 2025-12-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CRL,CRL,Charles River Laboratories,Current S&P 500,S&P 500 (Active),Added: 2021-05-14,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CRM,CRM,Salesforce Inc.,Current S&P 500,S&P 500 (Active),Added: September 12 2008,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+CRWD,CRWD,CrowdStrike,Current S&P 500,S&P 500 (Active),Added: 2024-06-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CSCO,CSCO,Cisco,Current S&P 500,S&P 500 (Active),Added: 1993-12-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CSGP,CSGP,CoStar Group,Current S&P 500,S&P 500 (Active),Added: 2022-09-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CSX,CSX,CSX Corporation,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CTAS,CTAS,Cintas,Current S&P 500,S&P 500 (Active),Added: 2001-03-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CTSH,CTSH,Cognizant,Current S&P 500,S&P 500 (Active),Added: 2006-11-17,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CTVA,CTVA,Corteva,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: October 6 2026,Removed Oct 6 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CVNA,CVNA,Carvana,Current S&P 500,S&P 500 (Active),Added: 2025-12-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CVS,CVS,CVS Health,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CVX,CVX,Chevron Corporation,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+CZR,CZR,Caesars Entertainment,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 22 2025,Removed Sept 22 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+D,D,Dominion Energy,Current S&P 500,S&P 500 (Active),Added: 2016-11-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DAL,DAL,Delta Air Lines,Current S&P 500,S&P 500 (Active),Added: 2013-09-11,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DASH,DASH,DoorDash,Current S&P 500,S&P 500 (Active),Added: 2025-03-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DD,DD,DuPont,Current S&P 500,S&P 500 (Active),Added: 2019-06-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DDOG,DDOG,Datadog,Current S&P 500,S&P 500 (Active),Added: 2025-07-09,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DE,DE,Deere & Company,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DECK,DECK,Deckers Brands,Current S&P 500,S&P 500 (Active),Added: 2024-03-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DELL,DELL,Dell Technologies,Current S&P 500,S&P 500 (Active),Added: 2024-09-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DG,DG,Dollar General,Current S&P 500,S&P 500 (Active),Added: 2012-12-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DGX,DGX,Quest Diagnostics Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+DHI,DHI,D. R. Horton,Current S&P 500,S&P 500 (Active),Added: 2005-06-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DHR,DHR,Danaher Corporation,Current S&P 500,S&P 500 (Active),Added: 1998-11-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DINO,HFC,HF Sinclair (ex-HollyFrontier),Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: June 4 2021,Formerly HFC; renamed to DINO. Removed June 4 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DIS,DIS,The Walt Disney Company,Current S&P 500,S&P 500 (Active),Added: July 1 1976,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+DLR,DLR,Digital Realty,Current S&P 500,S&P 500 (Active),Added: 2016-05-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DLTR,DLTR,Dollar Tree,Current S&P 500,S&P 500 (Active),Added: 2011-12-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DOC,DOC,Healthpeak Properties,Current S&P 500,S&P 500 (Active),Added: 2008-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DOV,DOV,Dover Corporation,Current S&P 500,S&P 500 (Active),Added: 1985-10-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DOW,DOW,Dow Inc.,Current S&P 500,S&P 500 (Active),Added: 2019-04-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DPZ,DPZ,Domino's,Current S&P 500,S&P 500 (Active),Added: 2020-05-12,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DRI,DRI,Darden Restaurants,Current S&P 500,S&P 500 (Active),Added: 1995-05-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DTE,DTE,DTE Energy,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DUK,DUK,Duke Energy,Current S&P 500,S&P 500 (Active),Added: 1976-06-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DVA,DVA,DaVita,Current S&P 500,S&P 500 (Active),Added: 2008-07-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DVN,DVN,Devon Energy,Current S&P 500,S&P 500 (Active),Added: 2000-08-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+DXC,DXC,DXC Technology,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: October 3 2023,Removed Oct 3 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DXCM,DXCM,Dexcom,Current S&P 500,S&P 500 (Active),Added: 2020-05-12,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EBAY,EBAY,eBay Inc.,Current S&P 500,S&P 500 (Active),Added: 2002-07-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ECHO,ECHO,EchoStar,Current S&P 500,S&P 500 (Active),Added: 2026-03-23,Current S&P 500 constituent (also traded as SATS),https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ECL,ECL,Ecolab,Current S&P 500,S&P 500 (Active),Added: 1989-01-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ED,ED,Consolidated Edison,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EFX,EFX,Equifax,Current S&P 500,S&P 500 (Active),Added: 1997-06-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EG,EG,Everest Group,Current S&P 500,S&P 500 (Active),Added: 2017-06-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EIX,EIX,Edison International,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EL,EL,Estée Lauder Companies (The),Current S&P 500,S&P 500 (Active),Added: 2006-01-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ELV,ELV,Elevance Health,Current S&P 500,S&P 500 (Active),Added: 2002-07-25,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EME,EME,Emcor,Current S&P 500,S&P 500 (Active),Added: 2025-09-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EMN,EMN,Eastman Chemical Co.,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: November 4 2025,Removed Nov 4 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+EMR,EMR,Emerson Electric,Current S&P 500,S&P 500 (Active),Added: 1965-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ENPH,ENPH,Enphase Energy,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 22 2025,Removed Sept 22 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+EOG,EOG,EOG Resources,Current S&P 500,S&P 500 (Active),Added: 2000-11-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EPAM,EPAM,EPAM Systems,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 2 2026,Removed June 2 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+EQIX,EQIX,Equinix,Current S&P 500,S&P 500 (Active),Added: 2015-03-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EQT,EQT,EQT Corporation,Current S&P 500,S&P 500 (Active),Added: 2022-10-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ERIE,ERIE,Erie Indemnity,Current S&P 500,S&P 500 (Active),Added: 2024-09-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ES,ES,Eversource Energy,Current S&P 500,S&P 500 (Active),Added: 2009-07-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ESS,ESS,Essex Property Trust,Current S&P 500,S&P 500 (Active),Added: 2014-04-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ETN,ETN,Eaton Corporation,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ETR,ETR,Entergy,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ETSY,ETSY,Etsy,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 23 2024,Removed Sept 23 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+EVRG,EVRG,Evergy,Current S&P 500,S&P 500 (Active),Added: 2018-06-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EW,EW,Edwards Lifesciences,Current S&P 500,S&P 500 (Active),Added: 2011-04-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EXC,EXC,Exelon,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EXE,EXE,Expand Energy,Current S&P 500,S&P 500 (Active),Added: 2025-03-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EXPD,EXPD,Expeditors International,Current S&P 500,S&P 500 (Active),Added: 2007-10-10,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EXPE,EXPE,Expedia Group,Current S&P 500,S&P 500 (Active),Added: 2007-10-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+EXR,EXR,Extra Space Storage,Current S&P 500,S&P 500 (Active),Added: 2016-01-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+F,F,Ford Motor Company,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FANG,FANG,Diamondback Energy,Current S&P 500,S&P 500 (Active),Added: 2018-12-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FAST,FAST,Fastenal,Current S&P 500,S&P 500 (Active),Added: 2008-09-15,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FBIN,FBHS,Fortune Brands Innovations (ex-Fortune Brands Home & Security),Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: December 19 2022,Formerly FBHS; renamed to FBIN. Removed Dec 19 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+FCX,FCX,Freeport-McMoRan,Current S&P 500,S&P 500 (Active),Added: 2011-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FDS,FDS,FactSet,Current S&P 500,S&P 500 (Active),Added: 2021-12-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FDX,FDX,FedEx,Current S&P 500,S&P 500 (Active),Added: 1980-12-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FDXF,FDXF,FedEx Freight,Current S&P 500,S&P 500 (Active),Added: 2026-06-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FE,FE,FirstEnergy,Current S&P 500,S&P 500 (Active),Added: 1997-11-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FERG,FERG,Ferguson Enterprises,Current S&P 500,S&P 500 (Active),Added: 2026-08-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FFIV,FFIV,F5 Inc.,Current S&P 500,S&P 500 (Active),Added: 2010-12-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FICO,FICO,Fair Isaac,Current S&P 500,S&P 500 (Active),Added: 2023-03-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FIS,FIS,Fidelity National Information Services,Current S&P 500,S&P 500 (Active),Added: 2006-11-10,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FISV,FISV,Fiserv,Current S&P 500,S&P 500 (Active),Added: 2001-04-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FITB,FITB,Fifth Third Bancorp,Current S&P 500,S&P 500 (Active),Added: 1996-03-29,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FIX,FIX,Comfort Systems USA,Current S&P 500,S&P 500 (Active),Added: 2025-12-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FLEX,FLEX,Flex Ltd.,Current S&P 500,S&P 500 (Active),Added: 2026-06-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FLS,FLS,Flowserve,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: March 22 2021,Removed March 22 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+FMC,FMC,FMC Corporation,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 24 2025,Removed March 24 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+FOX,FOX,Fox Corporation (Class B),Current S&P 500,S&P 500 (Active),Added: 2019-03-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FOXA,FOXA,Fox Corporation (Class A),Current S&P 500,S&P 500 (Active),Added: 2019-03-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FRT,FRT,Federal Realty Investment Trust,Current S&P 500,S&P 500 (Active),Added: 2016-02-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FSLR,FSLR,First Solar,Current S&P 500,S&P 500 (Active),Added: 2022-12-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FTI,FTI,TechnipFMC,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: February 12 2021,Removed Feb 12 2021 (Spun off Technip Energies; FTI in S&P MidCap 400),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+FTNT,FTNT,Fortinet,Current S&P 500,S&P 500 (Active),Added: 2018-10-11,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+FTV,FTV,Fortive,Current S&P 500,S&P 500 (Active),Added: 2016-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GAP,GPS,Gap Inc.,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: February 3 2022,Formerly GPS; renamed to GAP. Removed Feb 3 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+GD,GD,General Dynamics,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GDDY,GDDY,GoDaddy,Current S&P 500,S&P 500 (Active),Added: 2024-06-24,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GE,GE,GE Aerospace,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GEHC,GEHC,GE HealthCare,Current S&P 500,S&P 500 (Active),Added: 2023-01-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GEN,GEN,Gen Digital,Current S&P 500,S&P 500 (Active),Added: 2003-03-25,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GEV,GEV,GE Vernova,Current S&P 500,S&P 500 (Active),Added: 2024-04-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GILD,GILD,Gilead Sciences,Current S&P 500,S&P 500 (Active),Added: 2004-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GIS,GIS,General Mills,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GL,GL,Globe Life,Current S&P 500,S&P 500 (Active),Added: 1989-04-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GLW,GLW,Corning Inc.,Current S&P 500,S&P 500 (Active),Added: 1995-02-27,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GM,GM,General Motors,Current S&P 500,S&P 500 (Active),Added: 2013-06-06,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GNRC,GNRC,Generac,Current S&P 500,S&P 500 (Active),Added: 2021-03-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GOOG,GOOG,Alphabet Inc. (Class C),Current S&P 500,S&P 500 (Active),Added: 2014-04-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GOOGL,GOOGL,Alphabet Inc. (Class A),Current S&P 500,S&P 500 (Active),Added: 2006-04-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GPC,GPC,Genuine Parts Company,Current S&P 500,S&P 500 (Active),Added: 1973-12-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GPN,GPN,Global Payments,Current S&P 500,S&P 500 (Active),Added: 2016-04-25,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GRMN,GRMN,Garmin,Current S&P 500,S&P 500 (Active),Added: 2012-12-12,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GS,GS,Goldman Sachs,Current S&P 500,S&P 500 (Active),Added: 2002-07-22,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+GWW,GWW,W.W. Grainger Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+HAL,HAL,Halliburton,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HAS,HAS,Hasbro,Current S&P 500,S&P 500 (Active),Added: 1984-09-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HBAN,HBAN,Huntington Bancshares,Current S&P 500,S&P 500 (Active),Added: 1997-08-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HCA,HCA,HCA Healthcare,Current S&P 500,S&P 500 (Active),Added: 2015-01-27,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HD,HD,Home Depot (The),Current S&P 500,S&P 500 (Active),Added: 1988-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HIG,HIG,Hartford (The),Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HII,HII,Huntington Ingalls Industries,Current S&P 500,S&P 500 (Active),Added: 2018-01-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HLT,HLT,Hilton Worldwide,Current S&P 500,S&P 500 (Active),Added: 2017-06-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HOG,HOG,Harley-Davidson,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: June 22 2020,Removed June 22 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+HON,HON,Honeywell Technologies,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HONA,HONA,Honeywell Aerospace,Current S&P 500,S&P 500 (Active),Added: 2026-06-29,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HOOD,HOOD,Robinhood Markets Inc. (Class A),Current S&P 500,S&P 500 (Active),Added: September 22 2025,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+HP,HP,Helmerich & Payne,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: May 22 2020,Removed May 22 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+HPE,HPE,Hewlett Packard Enterprise,Current S&P 500,S&P 500 (Active),Added: 2015-11-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HPQ,HPQ,HP Inc.,Current S&P 500,S&P 500 (Active),Added: 1974-12-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HRB,HRB,H&R Block,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: September 21 2020,Removed Sept 21 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+HRL,HRL,Hormel Foods,Current S&P 500,S&P 500 (Active),Added: 2009-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HSIC,HSIC,Henry Schein,Current S&P 500,S&P 500 (Active),Added: 2015-03-17,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HST,HST,Host Hotels & Resorts,Current S&P 500,S&P 500 (Active),Added: 2007-03-20,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HSY,HSY,Hershey Company (The),Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HUBB,HUBB,Hubbell Incorporated,Current S&P 500,S&P 500 (Active),Added: 2023-10-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HUM,HUM,Humana,Current S&P 500,S&P 500 (Active),Added: 2012-12-10,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+HWM,HWM,Howmet Aerospace,Current S&P 500,S&P 500 (Active),Added: 2016-10-21,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IBKR,IBKR,Interactive Brokers,Current S&P 500,S&P 500 (Active),Added: 2025-08-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IBM,IBM,IBM,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ICE,ICE,Intercontinental Exchange,Current S&P 500,S&P 500 (Active),Added: 2007-09-26,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IDXX,IDXX,Idexx Laboratories,Current S&P 500,S&P 500 (Active),Added: 2017-01-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IEX,IEX,IDEX Corporation,Current S&P 500,S&P 500 (Active),Added: 2019-08-09,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IFF,IFF,International Flavors & Fragrances,Current S&P 500,S&P 500 (Active),Added: 1976-03-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ILMN,ILMN,Illumina Inc.,Current S&P 500,S&P 500 (Active),Added: 2026-09-21,Removed June 24 2024; re-added to S&P 500 Sept 21 2026,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+INCY,INCY,Incyte,Current S&P 500,S&P 500 (Active),Added: 2017-02-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+INTC,INTC,Intel,Current S&P 500,S&P 500 (Active),Added: 1976-12-31,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+INTU,INTU,Intuit,Current S&P 500,S&P 500 (Active),Added: 2000-12-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+INVH,INVH,Invitation Homes,Current S&P 500,S&P 500 (Active),Added: 2022-09-19,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IP,IP,International Paper,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IPGP,IPGP,IPG Photonics,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: June 21 2022,Removed June 21 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+IQV,IQV,IQVIA,Current S&P 500,S&P 500 (Active),Added: 2017-08-29,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IR,IR,Ingersoll Rand,Current S&P 500,S&P 500 (Active),Added: 2020-03-03,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IRM,IRM,Iron Mountain,Current S&P 500,S&P 500 (Active),Added: 2009-01-06,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ISRG,ISRG,Intuitive Surgical,Current S&P 500,S&P 500 (Active),Added: 2008-06-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IT,IT,Gartner,Current S&P 500,S&P 500 (Active),Added: 2017-04-05,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+ITW,ITW,Illinois Tool Works,Current S&P 500,S&P 500 (Active),Added: 1986-02-28,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+IVZ,IVZ,Invesco,Current S&P 500,S&P 500 (Active),Added: 2008-08-21,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+J,J,Jacobs Solutions,Current S&P 500,S&P 500 (Active),Added: 2007-10-26,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+JBHT,JBHT,J.B. Hunt,Current S&P 500,S&P 500 (Active),Added: 2015-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+JBL,JBL,Jabil,Current S&P 500,S&P 500 (Active),Added: 2023-12-18,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+JCI,JCI,Johnson Controls,Current S&P 500,S&P 500 (Active),Added: 2010-08-27,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+JKHY,JKHY,Jack Henry & Associates,Current S&P 500,S&P 500 (Active),Added: 2018-11-13,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+JNJ,JNJ,Johnson & Johnson,Current S&P 500,S&P 500 (Active),Added: 1973-06-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+JPM,JPM,JPMorgan Chase,Current S&P 500,S&P 500 (Active),Added: 1975-06-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KDP,KDP,Keurig Dr Pepper,Current S&P 500,S&P 500 (Active),Added: 2022-06-21,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KEY,KEY,KeyCorp,Current S&P 500,S&P 500 (Active),Added: 1994-03-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KEYS,KEYS,Keysight Technologies,Current S&P 500,S&P 500 (Active),Added: 2018-11-06,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KHC,KHC,The Kraft Heinz Company,Current S&P 500,S&P 500 (Active),Added: July 6 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+KIM,KIM,Kimco Realty,Current S&P 500,S&P 500 (Active),Added: 2006-04-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KKR,KKR,KKR & Co.,Current S&P 500,S&P 500 (Active),Added: June 24 2024,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KLAC,KLAC,KLA Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+KMB,KMB,Kimberly-Clark,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KMI,KMI,Kinder Morgan,Current S&P 500,S&P 500 (Active),Added: 2012-05-25,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KMX,KMX,CarMax,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: October 31 2025,Removed Oct 31 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+KO,KO,Coca-Cola Company (The),Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+KR,KR,The Kroger Co.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+KSS,KSS,Kohl's,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 21 2020,Removed Sept 21 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+KVUE,KVUE,Kenvue,Current S&P 500,S&P 500 (Active),Added: 2023-08-25,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+L,L,Loews Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LDOS,LDOS,Leidos Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: August 9 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LEG,LEG,Leggett & Platt,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 20 2021,Removed Dec 20 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+LEN,LEN,Lennar Corporation (Class A),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LH,LH,Labcorp Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LHX,LHX,L3Harris Technologies Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LII,LII,Lennox International Inc.,Current S&P 500,S&P 500 (Active),Added: December 23 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LIN,LIN,Linde plc Ordinary Share,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LITE,LITE,Lumentum Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: March 23 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LKQ,LKQ,LKQ Corporation,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 22 2025,Removed Dec 22 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+LLY,LLY,Eli Lilly & Co.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LMT,LMT,Lockheed Martin Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LNC,LNC,Lincoln National Corporation,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 18 2023,Removed Sept 18 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+LNT,LNT,Alliant Energy,Current S&P 500,S&P 500 (Active),Added: 2016-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+LOW,LOW,Lowe's Companies Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LRCX,LRCX,Lam Research Corp,Current S&P 500,S&P 500 (Active),Added: June 5 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LULU,LULU,lululemon athletica inc.,Current S&P 500,S&P 500 (Active),Added: October 18 2023,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LUMN,LUMN,Lumen Technologies,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 20 2023,Removed March 20 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+LUV,LUV,Southwest Airlines Co.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LVS,LVS,Las Vegas Sands Corp.,Current S&P 500,S&P 500 (Active),Added: October 3 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LW,LW,Lamb Weston,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 23 2026,Removed March 23 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+LYB,LYB,LyondellBasell Industries N.V. (Class A),Current S&P 500,S&P 500 (Active),Added: September 5 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+LYV,LYV,Live Nation Entertainment Inc.,Current S&P 500,S&P 500 (Active),Added: December 23 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+M,M,Macy's,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: April 6 2020,Removed April 6 2020 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MA,MA,Mastercard Incorporated,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MAA,MAA,Mid-America Apartment Communities Inc.,Current S&P 500,S&P 500 (Active),Added: December 2 2016,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MAR,MAR,Marriott International (Class A),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MAS,MAS,Masco Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MBC,MBC,MasterBrand,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 19 2022,Removed Dec 19 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MCD,MCD,McDonald's Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MCHP,MCHP,Microchip Technology Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MCK,MCK,McKesson Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MCO,MCO,Moody's Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MDLZ,MDLZ,Mondelez International Inc. (Class A),Current S&P 500,S&P 500 (Active),Added: October 2 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MDT,MDT,Medtronic plc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MET,MET,MetLife Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+META,META,Meta Platforms Inc. (Class A),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MGM,MGM,MGM RESORTS INTERNATIONAL,Current S&P 500,S&P 500 (Active),Added: July 26 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MHK,MHK,Mohawk Industries,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 22 2025,Removed Dec 22 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MKC,MKC,McCormick & Company Incorporated Non-VTG CS,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MKTX,MKTX,MarketAxess,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 22 2025,Removed Sept 22 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MLM,MLM,Martin Marietta Materials,Current S&P 500,S&P 500 (Active),Added: July 2 2014,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MMM,MMM,3M,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+MNST,MNST,Monster Beverage Corporation,Current S&P 500,S&P 500 (Active),Added: June 29 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MO,MO,Altria,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+MOH,MOH,Molina Healthcare,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: March 23 2026,Removed March 23 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MOS,MOS,The Mosaic Company,Current S&P 500,S&P 500 (Active),Added: September 23 2011,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MPC,MPC,MARATHON PETROLEUM CORPORATION,Current S&P 500,S&P 500 (Active),Added: June 30 2011,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MPWR,MPWR,Monolithic Power Systems Inc.,Current S&P 500,S&P 500 (Active),Added: February 12 2021,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MRK,MRK,Merck & Co. Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MRNA,MRNA,Moderna Inc.,Current S&P 500,S&P 500 (Active),Added: July 21 2021,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MRSH,MRSH,Marsh,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MRVL,MRVL,Marvell Technology Inc.,Current S&P 500,S&P 500 (Active),Added: June 22 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MS,MS,Morgan Stanley,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MSCI,MSCI,MSCI Inc.,Current S&P 500,S&P 500 (Active),Added: April 4 2018,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MSFT,MSFT,Microsoft Corp,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MSI,MSI,Motorola Solutions Inc. New,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MTB,MTB,M&T Bank Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MTCH,MTCH,Match Group,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 23 2026,Removed March 23 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MTD,MTD,Mettler-Toledo International,Current S&P 500,S&P 500 (Active),Added: September 6 2016,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+MU,MU,Micron Technology Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NCLH,NCLH,Norwegian Cruise Line Holdings Ltd.,Current S&P 500,S&P 500 (Active),Added: October 13 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NDAQ,NDAQ,Nasdaq Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NDSN,NDSN,Nordson Corp,Current S&P 500,S&P 500 (Active),Added: February 15 2022,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NEE,NEE,NextEra Energy Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NEM,NEM,Newmont Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NFLX,NFLX,NetFlix Inc,Current S&P 500,S&P 500 (Active),Added: December 17 2010,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NI,NI,NiSource Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NKE,NKE,Nike Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NOC,NOC,Northrop Grumman Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NOV,NOV,Nov,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: September 20 2021,Removed Sept 20 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+NOW,NOW,SERVICENOW INC.,Current S&P 500,S&P 500 (Active),Added: November 21 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NRG,NRG,NRG Energy Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NSC,NSC,Norfolk Southern Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NTAP,NTAP,NetApp Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NTRS,NTRS,Northern Trust Corp,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NUE,NUE,Nucor Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NVDA,NVDA,Nvidia Corp,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NVR,NVR,NVR Inc.,Current S&P 500,S&P 500 (Active),Added: September 26 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NWL,NWL,Newell Brands,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 18 2023,Removed Sept 18 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+NWS,NWS,News Corporation Class B,Current S&P 500,S&P 500 (Active),Added: September 18 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NWSA,NWSA,News Corporation (Class A),Current S&P 500,S&P 500 (Active),Added: July 1 2013,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+NXPI,NXPI,NXP Semiconductors N.V.,Current S&P 500,S&P 500 (Active),Added: March 22 2021,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+O,O,Realty Income Corporation,Current S&P 500,S&P 500 (Active),Added: April 7 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ODFL,ODFL,Old Dominion Freight Line,Current S&P 500,S&P 500 (Active),Added: December 9 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+OGN,OGN,Organon & Co.,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: October 18 2023,Removed Oct 18 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+OKE,OKE,Oneok Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+OMC,OMC,Omnicom Group Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ON,ON,ON Semiconductor Corp,Current S&P 500,S&P 500 (Active),Added: June 21 2022,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ORCL,ORCL,Oracle Corp,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ORLY,ORLY,O'Reilly Automotive Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+OTIS,OTIS,Otis Worldwide Corporation,Current S&P 500,S&P 500 (Active),Added: April 3 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+OXY,OXY,Occidental Petroleum Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+P,P,Everpure,Current S&P 500,S&P 500 (Active),Added: 2026-09-21,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+PANW,PANW,Palo Alto Networks Inc.,Current S&P 500,S&P 500 (Active),Added: June 20 2023,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PAYC,PAYC,Paycom,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 23 2026,Removed March 23 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PAYX,PAYX,Paychex Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PCAR,PCAR,Paccar Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PCG,PCG,PG&E Corporation,Current S&P 500,S&P 500 (Active),Added: October 3 2022,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PEG,PEG,Public Service Enterprise Group Incorporated,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PENN,PENN,Penn Entertainment,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 19 2022,Removed Sept 19 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PEP,PEP,PepsiCo Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PFE,PFE,Pfizer Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PFG,PFG,Principal Financial Group Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PG,PG,Procter & Gamble Company,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PGR,PGR,Progressive Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PH,PH,Parker-Hannifin Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PHM,PHM,Pultegroup Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PKG,PKG,Packaging Corp of America,Current S&P 500,S&P 500 (Active),Added: July 26 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PLD,PLD,PROLOGIS INC.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PLTR,PLTR,Palantir Technologies Inc. (Class A),Current S&P 500,S&P 500 (Active),Added: September 23 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PM,PM,Philip Morris International Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PNC,PNC,PNC Financial Services Group,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PNR,PNR,Pentair plc,Current S&P 500,S&P 500 (Active),Added: October 1 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PNW,PNW,Pinnacle West Capital Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PODD,PODD,Insulet Corporation,Current S&P 500,S&P 500 (Active),Added: 2023-03-15,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+POOL,POOL,Pool Corporation,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 22 2026,Removed June 22 2026 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PPG,PPG,PPG Industries Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PPL,PPL,PPL Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PRGO,PRGO,Perrigo,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: September 20 2021,Removed Sept 20 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PRU,PRU,Prudential Financial Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PSA,PSA,Public Storage,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PSX,PSX,PHILLIPS 66,Current S&P 500,S&P 500 (Active),Added: April 23 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PTC,PTC,PTC INC,Current S&P 500,S&P 500 (Active),Added: April 20 2021,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PVH,PVH,PVH,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: September 19 2022,Removed Sept 19 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PWR,PWR,Quanta Services Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+PYPL,PYPL,PayPal Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: July 20 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+Q,Q,Qnity Electronics Inc.,Current S&P 500,S&P 500 (Active),Added: November 3 2025,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+QCOM,QCOM,Qualcomm Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+QRVO,QRVO,Qorvo,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 23 2024,Removed Dec 23 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+RCL,RCL,Royal Caribbean Group,Current S&P 500,S&P 500 (Active),Added: December 5 2014,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RDDT,RDDT,Reddit Inc.,Current S&P 500,S&P 500 (Active),Added: August 18 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+REG,REG,Regency Centers Corporation,Current S&P 500,S&P 500 (Active),Added: March 2 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+REGN,REGN,Regeneron Pharmaceuticals Inc,Current S&P 500,S&P 500 (Active),Added: April 30 2013,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RF,RF,Regions Financial Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RHI,RHI,Robert Half,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 24 2024,Removed June 24 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+RJF,RJF,Raymond James Financial Inc.,Current S&P 500,S&P 500 (Active),Added: March 20 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RL,RL,Ralph Lauren Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RMD,RMD,ResMed Inc.,Current S&P 500,S&P 500 (Active),Added: July 26 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ROK,ROK,Rockwell Automation Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ROL,ROL,Rollins Inc.,Current S&P 500,S&P 500 (Active),Added: October 1 2018,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ROP,ROP,Roper Technologies Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ROST,ROST,Ross Stores Inc,Current S&P 500,S&P 500 (Active),Added: December 18 2009,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RSG,RSG,Republic Services Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RTX,RTX,RTX Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+RVTY,RVTY,Revvity Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SBAC,SBAC,SBA Communications Corp,Current S&P 500,S&P 500 (Active),Added: September 1 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SBUX,SBUX,Starbucks Corp,Current S&P 500,S&P 500 (Active),Added: June 7 2000,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SCHW,SCHW,Charles Schwab Corporation,Current S&P 500,S&P 500 (Active),Added: 1997-06-02,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+SEDG,SEDG,SolarEdge,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 18 2023,Removed Dec 18 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+SHW,SHW,The Sherwin-Williams Company,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SJM,SJM,The J.M. Smucker Company,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SKYD,SKYD,Skydance Corporation (Paramount Skydance),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent (formerly Paramount Global PARA / ViacomCBS VIAC),https://www.slickcharts.com/sp500/performance
+SLB,SLB,SLB Limited,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SLG,SLG,SL Green Realty,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 22 2021,Removed March 22 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+SMCI,SMCI,Super Micro Computer Inc.,Current S&P 500,S&P 500 (Active),Added: March 18 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SNA,SNA,Snap-on Incorporated,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SNDK,SNDK,Sandisk Corporation,Current S&P 500,S&P 500 (Active),Added: November 28 2025,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SNPS,SNPS,Synopsys Inc,Current S&P 500,S&P 500 (Active),Added: March 16 2017,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SO,SO,The Southern Company,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SOLS,SOLS,Solstice Advanced Materials,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: December 22 2025,Removed Dec 22 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+SOLV,SOLV,Solventum Corporation,Current S&P 500,S&P 500 (Active),Added: April 1 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SPG,SPG,Simon Property Group Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SPGI,SPGI,S&P Global Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SRE,SRE,Sempra,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+STE,STE,STERIS plc,Current S&P 500,S&P 500 (Active),Added: December 23 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+STLD,STLD,Steel Dynamics Inc,Current S&P 500,S&P 500 (Active),Added: December 22 2022,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+STT,STT,State Street Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+STX,STX,Seagate Technology Holdings PLC,Current S&P 500,S&P 500 (Active),Added: July 2 2012,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+STZ,STZ,Constellation Brands,Current S&P 500,S&P 500 (Active),Added: 2005-07-01,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+SW,SW,Smurfit Westrock plc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent (formed via WestRock WRK merger),https://www.slickcharts.com/sp500/performance
+SWK,SWK,Stanley Black & Decker Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SWKS,SWKS,Skyworks Solutions Inc,Current S&P 500,S&P 500 (Active),Added: March 12 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SYF,SYF,SYNCHRONY FINANCIAL,Current S&P 500,S&P 500 (Active),Added: November 18 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SYK,SYK,Stryker Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+SYY,SYY,Sysco Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+T,T,AT&T,Current S&P 500,S&P 500 (Active),Added: 1983-11-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+TAP,TAP,Molson Coors,Removed (Still Actively Trading),NYSE (Active),Removed: September 21 2026,Removed Sept 21 2026 (Market cap change; actively trading on NYSE),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+TDG,TDG,TransDigm Group Incorporated,Current S&P 500,S&P 500 (Active),Added: June 3 2016,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TDY,TDY,Teledyne Technologies Incorporated,Current S&P 500,S&P 500 (Active),Added: June 22 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TECH,TECH,Bio-Techne,Current S&P 500,S&P 500 (Active),Added: 2021-08-30,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+TEL,TEL,TE Connectivity plc,Current S&P 500,S&P 500 (Active),Added: October 14 2011,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TER,TER,Teradyne Inc.,Current S&P 500,S&P 500 (Active),Added: September 21 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TFC,TFC,Truist Financial Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TFX,TFX,Teleflex,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: March 24 2025,Removed March 24 2025 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+TGT,TGT,Target Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TJX,TJX,TJX Companies Inc. (The),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TKO,TKO,TKO Group Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: March 24 2025,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TMO,TMO,Thermo Fisher Scientific Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TMUS,TMUS,T-Mobile US Inc.,Current S&P 500,S&P 500 (Active),Added: July 15 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TPL,TPL,Texas Pacific Land Corporation,Current S&P 500,S&P 500 (Active),Added: November 26 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TPR,TPR,Tapestry Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TRGP,TRGP,Targa Resources Corp.,Current S&P 500,S&P 500 (Active),Added: October 12 2022,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TRMB,TRMB,Trimble Inc.,Current S&P 500,S&P 500 (Active),Added: January 21 2021,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TROW,TROW,T Rowe Price Group Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TRV,TRV,The Travelers Companies Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TSCO,TSCO,Tractor Supply Co,Current S&P 500,S&P 500 (Active),Added: January 24 2014,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TSLA,TSLA,Tesla Inc.,Current S&P 500,S&P 500 (Active),Added: December 21 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TSN,TSN,Tyson Foods Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TT,TT,Trane Technologies plc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TTD,TTD,The Trade Desk,Removed (Still Actively Trading),NASDAQ (Active),Removed: September 21 2026,Removed Sept 21 2026 (Market cap change; actively trading on NASDAQ),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+TTWO,TTWO,Take-Two Interactive Software Inc,Current S&P 500,S&P 500 (Active),Added: March 19 2018,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TWLO,TWLO,Twilio Inc.,Current S&P 500,S&P 500 (Active),Added: October 6 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TXN,TXN,Texas Instruments Incorporated,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TXT,TXT,Textron Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+TYL,TYL,Tyler Technologies Inc.,Current S&P 500,S&P 500 (Active),Added: June 22 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UA,UA,Under Armour (Class C),Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 21 2022,Removed June 21 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+UAA,UAA,Under Armour (Class A),Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: June 21 2022,Removed June 21 2022 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+UAL,UAL,United Airlines Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: September 2 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UBER,UBER,Uber Technologies Inc.,Current S&P 500,S&P 500 (Active),Added: December 18 2023,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UDR,UDR,UDR Inc.,Current S&P 500,S&P 500 (Active),Added: March 7 2016,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UHS,UHS,Universal Health Services Inc. Class B,Current S&P 500,S&P 500 (Active),Added: September 20 2014,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ULTA,ULTA,Ulta Beauty Inc.,Current S&P 500,S&P 500 (Active),Added: April 18 2016,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UNH,UNH,UNITEDHEALTH GROUP INCORPORATED (Delaware),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UNM,UNM,Unum,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: September 20 2021,Removed Sept 20 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+UNP,UNP,Union Pacific Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+UPS,UPS,United Parcel Service Inc. Class B,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+URI,URI,United Rentals Inc.,Current S&P 500,S&P 500 (Active),Added: September 20 2014,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+USB,USB,U.S. Bancorp,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+V,V,VISA Inc.,Current S&P 500,S&P 500 (Active),Added: December 18 2009,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VEEV,VEEV,Veeva Systems Inc.,Current S&P 500,S&P 500 (Active),Added: May 7 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VFC,VFC,VF Corporation,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: April 3 2024,Removed April 3 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+VICI,VICI,VICI Properties Inc.,Current S&P 500,S&P 500 (Active),Added: June 8 2022,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VLO,VLO,Valero Energy Corporation,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VLTO,VLTO,Veralto Corporation,Current S&P 500,S&P 500 (Active),Added: October 2 2023,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VMC,VMC,Vulcan Materials Company(Holding Company),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VMRK,VMRK,Vivmark Residential (formerly Equity Residential),Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent (formerly Equity Residential EQR),https://www.slickcharts.com/sp500/performance
+VNO,VNO,Vornado Realty Trust,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: January 5 2023,Removed Jan 5 2023 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+VNT,VNT,Vontier,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: March 22 2021,Removed March 22 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+VRSK,VRSK,Verisk Analytics Inc.,Current S&P 500,S&P 500 (Active),Added: October 7 2015,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VRSN,VRSN,VeriSign Inc,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VRT,VRT,Vertiv Holdings Co (Class A),Current S&P 500,S&P 500 (Active),Added: March 23 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VRTX,VRTX,Vertex Pharmaceuticals Inc,Current S&P 500,S&P 500 (Active),Added: September 20 2013,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VST,VST,Vistra Corp.,Current S&P 500,S&P 500 (Active),Added: May 8 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VTR,VTR,Ventas Inc.,Current S&P 500,S&P 500 (Active),Added: March 3 2009,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VTRS,VTRS,Viatris Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VYLR,VYLR,Vylor Inc.,Current S&P 500,S&P 500 (Active),Added: October 1 2026,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+VZ,VZ,Verizon Communications,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WAB,WAB,Wabtec Inc.,Current S&P 500,S&P 500 (Active),Added: February 27 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WAT,WAT,Waters Corp,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WDAY,WDAY,Workday Inc. (Class A),Current S&P 500,S&P 500 (Active),Added: December 23 2024,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WDC,WDC,Western Digital Corp.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WEC,WEC,WEC Energy Group Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WELL,WELL,Welltower Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WFC,WFC,Wells Fargo & Co.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WHR,WHR,Whirlpool Corporation,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: March 18 2024,Removed March 18 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+WM,WM,Waste Management Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WMB,WMB,Williams Companies Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WMT,WMT,Walmart Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WRB,WRB,W.R. Berkley Corporation,Current S&P 500,S&P 500 (Active),Added: December 5 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WSM,WSM,Williams-Sonoma Inc.,Current S&P 500,S&P 500 (Active),Added: March 24 2025,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WST,WST,West Pharmaceutical Services Inc.,Current S&P 500,S&P 500 (Active),Added: May 22 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WTW,WLTW,Willis Towers Watson Public Limited Company,Current S&P 500,S&P 500 (Active),Added: January 10 2022,Formerly traded as WLTW prior to Jan 10 2022,https://www.slickcharts.com/sp500/performance
+WU,WU,Western Union,Removed (Still Actively Trading),S&P SmallCap 600 (Active),Removed: December 20 2021,Removed Dec 20 2021 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+WY,WY,Weyerhaeuser Company,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+WYNN,WYNN,Wynn Resorts Ltd,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+XEL,XEL,Xcel Energy Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+XOM,XOM,ExxonMobil,Current S&P 500,S&P 500 (Active),Added: 1957-03-04,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+XRAY,XRAY,Dentsply Sirona,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: April 3 2024,Removed April 3 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+XRX,XRX,Xerox,Removed (Still Actively Trading),NASDAQ (Active),Removed: March 22 2021,Removed March 22 2021 (Market cap change; actively trading on NASDAQ),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+XYL,XYL,Xylem Inc,Current S&P 500,S&P 500 (Active),Added: October 31 2011,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+XYZ,XYZ,Block Inc.,Current S&P 500,S&P 500 (Active),Added: 2025-07-23,Current S&P 500 constituent,https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+YUM,YUM,Yum! Brands Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ZBH,ZBH,Zimmer Biomet Holdings Inc.,Current S&P 500,S&P 500 (Active),Added: Prior to 2020,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ZBRA,ZBRA,Zebra Technologies Corporation,Current S&P 500,S&P 500 (Active),Added: December 23 2019,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance
+ZION,ZION,Zions Bancorporation,Removed (Still Actively Trading),S&P MidCap 400 (Active),Removed: March 18 2024,Removed March 18 2024 (Market cap change),https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+ZTS,ZTS,ZOETIS INC.,Current S&P 500,S&P 500 (Active),Added: June 21 2013,Current S&P 500 constituent,https://www.slickcharts.com/sp500/performance

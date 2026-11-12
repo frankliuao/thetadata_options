@@ -1,0 +1,52 @@
+ticker,historical_ticker,company_name,sp500_status,trading_status,date_added_or_removed,notes,source_url
+ABMD,Delisted,Abiomed,Excluded (Acquired),Delisted,Removed: December 22 2022,Johnson & Johnson acquired Abiomed.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+AGN,Delisted,Allergan,Excluded (Acquired),Delisted,Removed: May 12 2020,Allergan was acquired by AbbVie.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+ALXN,Delisted,Alexion Pharmaceuticals,Excluded (Acquired),Delisted,Removed: July 21 2021,AstraZeneca acquired Alexion Pharmaceuticals.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+ANSS,Delisted,Ansys,Excluded (Acquired),Delisted,Removed: July 18 2025,Synopsys acquired Ansys.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+ARNC,Delisted,Arconic,Excluded (Acquired),Delisted,Removed: April 1 2020,Separated into 2 companies (Howmet remained); Arconic acquired by Apollo Global Management (Aug 2023).,https://en.wikipedia.org/wiki/List_of_S%26P_600_companies
+ATVI,Delisted,Activision Blizzard,Excluded (Acquired),Delisted,Removed: October 18 2023,Acquired by Microsoft.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+AVB,Delisted,AvalonBay Communities,Excluded (Acquired),Delisted,Removed: August 18 2026,Equity Residential (now Vivmark Residential) acquired AvalonBay Communities.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CDAY,Delisted,Ceridian,Excluded (Acquired),Delisted,Removed: February 1 2024,Changed ticker to DAY (Dayforce); subsequently acquired by Thoma Bravo (Feb 2026).,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CERN,Delisted,Cerner,Excluded (Acquired),Delisted,Removed: June 8 2022,Oracle acquired Cerner.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CMA,Delisted,Comerica,Excluded (Acquired),Delisted,Removed: June 24 2024,Removed for market cap change; subsequently acquired by Fifth Third Bancorp (Feb 2026).,https://en.wikipedia.org/wiki/List_of_S%26P_400_companies
+CTLT,Delisted,Catalent,Excluded (Acquired),Delisted,Removed: December 23 2024,Novo Holdings A/S acquired Catalent.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CTRA,Delisted,Coterra Energy,Excluded (Acquired),Delisted,Removed: May 7 2026,Devon Energy acquired Coterra Energy.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CTXS,Delisted,Citrix Systems,Excluded (Acquired),Delisted,Removed: October 3 2022,Vista Equity Partners acquired Citrix Systems.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+CXO,Delisted,Concho Resources,Excluded (Acquired),Delisted,Removed: January 21 2021,ConocoPhillips acquired Concho Resources.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DAY,Delisted,Dayforce,Excluded (Acquired),Delisted,Removed: February 9 2026,Thoma Bravo L.P. acquired Dayforce.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DFS,Delisted,Discover Financial,Excluded (Acquired),Delisted,Removed: May 19 2025,Capital One acquired Discover Financial.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DISCA,Delisted,Discovery Inc. (Series A),Excluded (Merged),Delisted,Removed: April 11 2022,WarnerMedia and Discovery merged to create Warner Bros. Discovery.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DISCK,Delisted,Discovery Inc. (Series C),Excluded (Merged),Delisted,Removed: April 11 2022,WarnerMedia and Discovery merged to create Warner Bros. Discovery.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+DISH,Delisted,Dish Network,Excluded (Acquired),Delisted,Removed: June 20 2023,Removed for market cap change; subsequently acquired by EchoStar (Jan 2024).,https://en.wikipedia.org/wiki/List_of_S%26P_600_companies
+DRE,Delisted,Duke Realty,Excluded (Acquired),Delisted,Removed: October 3 2022,Prologis acquired Duke Realty.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+EA,Delisted,Electronic Arts,Excluded (Acquired),Delisted,Removed: August 5 2026,Acquired by an investor consortium (PIF; Silver Lake; Affinity Partners).,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+ETFC,Delisted,E-Trade,Excluded (Acquired),Delisted,Removed: October 7 2020,Morgan Stanley acquired E*Trade.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+FLIR,Delisted,FLIR Systems,Excluded (Acquired),Delisted,Removed: May 14 2021,Teledyne Technologies acquired FLIR Systems.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+FRC,Delisted,First Republic Bank,Excluded (Bankrupt / FDIC Receivership),Delisted,Removed: May 4 2023,Placed into FDIC receivership (failed bank).,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+HBI,Delisted,Hanesbrands,Excluded (Acquired),Delisted,Removed: December 20 2021,Removed for market cap change; subsequently acquired by Gildan Activewear (Dec 2025).,https://en.wikipedia.org/wiki/List_of_S%26P_600_companies
+HES,Delisted,Hess Corporation,Excluded (Acquired),Delisted,Removed: July 23 2025,Chevron acquired Hess.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+HOLX,Delisted,Hologic,Excluded (Acquired),Delisted,Removed: April 9 2026,Blackstone Inc. and TPG Inc. acquired Hologic.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+INFO,Delisted,IHS Markit,Excluded (Acquired),Delisted,Removed: March 2 2022,S&P Global acquired IHS Markit.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+IPG,Delisted,Interpublic Group,Excluded (Acquired),Delisted,Removed: November 28 2025,Omnicom Group acquired Interpublic Group.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+JNPR,Delisted,Juniper Networks,Excluded (Acquired),Delisted,Removed: July 9 2025,Hewlett Packard Enterprise acquired Juniper Networks.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+JWN,Delisted,Nordstrom,Excluded (Acquired / Taken Private),Delisted,Removed: June 22 2020,Removed for market cap change; subsequently taken private by Nordstrom family & El Puerto de Liverpool (May 2025).,https://en.wikipedia.org/wiki/List_of_S%26P_400_companies
+K,Delisted,Kellanova,Excluded (Acquired),Delisted,Removed: December 11 2025,Mars Inc. acquired Kellanova.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+KSU,Delisted,Kansas City Southern,Excluded (Acquired),Delisted,Removed: December 14 2021,Canadian Pacific acquired Kansas City Southern.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MRO,Delisted,Marathon Oil,Excluded (Acquired),Delisted,Removed: November 26 2024,ConocoPhillips acquired Marathon Oil.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+MXIM,Delisted,Maxim Integrated,Excluded (Acquired),Delisted,Removed: August 30 2021,Analog Devices acquired Maxim Integrated Products.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+NBL,Delisted,Noble Energy,Excluded (Acquired),Delisted,Removed: October 12 2020,Chevron acquired Noble Energy.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+NLSN,Delisted,Nielsen Holdings,Excluded (Acquired / Taken Private),Delisted,Removed: October 12 2022,Elliott Investment Management acquired Nielsen Holdings.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PBCT,Delisted,People's United Financial,Excluded (Acquired),Delisted,Removed: April 4 2022,M&T Bank acquired People's United Financial.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+PXD,Delisted,Pioneer Natural Resources,Excluded (Acquired),Delisted,Removed: May 8 2024,ExxonMobil acquired Pioneer Natural Resources.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+RTN,Delisted,Raytheon Company,Excluded (Merged),Delisted,Removed: April 6 2020,Merged with United Technologies to form RTX Corporation.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+SBNY,Delisted,Signature Bank,Excluded (Bankrupt / FDIC Receivership),Delisted,Removed: March 15 2023,Placed into FDIC receivership (failed bank).,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+SEE,Delisted,Sealed Air,Excluded (Acquired),Delisted,Removed: December 18 2023,Removed for market cap change; subsequently acquired by Clayton Dubilier & Rice (Apr 2026).,https://en.wikipedia.org/wiki/List_of_S%26P_600_companies
+SIVB,Delisted,SVB Financial Group,Excluded (Bankrupt / FDIC Receivership),Delisted,Removed: March 15 2023,Placed into FDIC receivership (Silicon Valley Bank failed).,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+TIF,Delisted,Tiffany & Co,Excluded (Acquired),Delisted,Removed: January 7 2021,LVMH acquired Tiffany & Co.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+TWTR,Delisted,Twitter,Excluded (Acquired / Taken Private),Delisted,Removed: November 1 2022,Elon Musk acquired Twitter (taken private).,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+VAR,Delisted,Varian Medical Systems,Excluded (Acquired),Delisted,Removed: April 20 2021,Siemens Healthineers acquired Varian Medical Systems.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+WBA,Delisted,Walgreens Boots Alliance,Excluded (Acquired / Taken Private),Delisted,Removed: August 28 2025,Sycamore Partners acquired Walgreens Boots Alliance.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+WBD,Delisted,Warner Bros. Discovery,Excluded (Acquired),Delisted,Removed: October 6 2026,Paramount Skydance acquired Warner Bros. Discovery.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+WCG,Delisted,WellCare,Excluded (Acquired),Delisted,Removed: January 28 2020,Centene acquired WellCare.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
+XEC,Delisted,Cimarex Energy,Excluded (Acquired),Delisted,Removed: March 2 2020,Merged with Cabot Oil & Gas to form Coterra Energy (Oct 2021); which was acquired by Devon Energy (May 2026).,https://en.wikipedia.org/wiki/List_of_S%26P_400_companies
+XLNX,Delisted,Xilinx,Excluded (Acquired),Delisted,Removed: February 15 2022,Advanced Micro Devices acquired Xilinx.,https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500
