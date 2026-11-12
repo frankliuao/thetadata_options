@@ -45,10 +45,12 @@ from thetadata.errors import AuthenticationError, NoDataFoundError
 
 from options_data.gdrive_sync import DEFAULT_GDRIVE_FOLDER_ID, GoogleDriveSync
 from options_data.schema import (
+    _SYMBOL_RE,
     date_expr,
     merge_option_frames,
     merge_underlying_frames,
     normalize_options_df,
+    validate_symbol,
     write_parquet_atomic,
 )
 
@@ -61,23 +63,9 @@ INDEX_ROOTS: frozenset[str] = frozenset(
     {"SPX", "SPXW", "XSP", "NDX", "NDXP", "XND", "RUT", "RUTW", "VIX", "VIXW", "DJX", "XEO"}
 )
 
-# One path component. Slashes and ".." are rejected so a ticker cannot escape data_dir.
-_SYMBOL_RE = re.compile(r"^[A-Z][A-Z0-9.]{0,9}$")
-
-
 def nyse_today() -> datetime.date:
     """Session calendar date. ThetaData EOD is stamped in America/New_York, not UTC."""
     return datetime.datetime.now(ZoneInfo("America/New_York")).date()
-
-
-def validate_symbol(symbol: str) -> str:
-    """Return a normalized ticker, or raise if it is not safe to use as a path component."""
-    sym = symbol.strip().upper()
-    if not _SYMBOL_RE.fullmatch(sym):
-        raise ValueError(
-            f"Invalid ticker {symbol!r}. Expected 1-10 characters using A-Z, digits, or '.'."
-        )
-    return sym
 
 
 def to_option_root(symbol: str) -> str:
@@ -396,9 +384,10 @@ class ThetaOptionsDownloader:
             if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
                 self._reauthenticate(force=True)
                 raise rpc_err
-            # If requesting today's EOD before market close / report generation (17:15 ET), ThetaData returns INVALID_ARGUMENT
             if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in str(rpc_err.details()):
-                return pl.DataFrame()
+                raise RuntimeError(
+                    f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {rpc_err.details()}"
+                )
             raise rpc_err
         except NoDataFoundError:
             if cfg.greeks_model != "none" and cfg.fallback_eod_if_no_greeks:
@@ -418,7 +407,9 @@ class ThetaOptionsDownloader:
                         self._reauthenticate(force=True)
                         raise rpc_err
                     if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in str(rpc_err.details()):
-                        return pl.DataFrame()
+                        raise RuntimeError(
+                            f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {rpc_err.details()}"
+                        )
                     raise rpc_err
                 except NoDataFoundError:
                     return pl.DataFrame()
@@ -497,11 +488,17 @@ class ThetaOptionsDownloader:
 
         df = self._fetch_single_day_options(symbol, trade_date)
         if df.is_empty():
-            # Record that this trading day had no option contracts/data, so skip_existing
-            # and hole-scanning in updater won't re-request this empty day every run.
-            empty_marker.parent.mkdir(parents=True, exist_ok=True)
-            empty_marker.touch()
-            return (trade_date, 0, "empty")
+            today_et = datetime.datetime.now(ZoneInfo("America/New_York")).date()
+            if trade_date < today_et:
+                # Record that this past trading day had no option contracts/data, so skip_existing
+                # and hole-scanning in updater won't re-request this empty day every run.
+                empty_marker.parent.mkdir(parents=True, exist_ok=True)
+                empty_marker.touch()
+                return (trade_date, 0, "empty")
+            else:
+                # Current or future session: never write permanent .empty sentinel as EOD data
+                # might still be pending generation or market close.
+                return (trade_date, 0, "not_ready")
 
         # If valid data is returned, clean up any stale empty sentinel
         if empty_marker.exists():
@@ -515,21 +512,39 @@ class ThetaOptionsDownloader:
                 logger.warning("Daily Drive upload failed for %s %s: %s", symbol, trade_date, gdrive_exc)
         return (trade_date, df.height, "saved")
 
-    def download_underlying_eod(self, symbol: str) -> Path | None:
+    def download_underlying_eod(self, symbol: str, start_date: datetime.date | None = None) -> Path | None:
         """Download underlying stock or index EOD history and upload to Google Drive."""
         sym = validate_symbol(symbol)
         out_path = self.config.data_dir / "raw" / "underlying_eod" / f"{sym}_eod.parquet"
+        fetch_start = start_date or self.config.start_date
+        if out_path.exists() and out_path.stat().st_size > 0:
+            try:
+                existing_scan = pl.scan_parquet(str(out_path))
+                cols = existing_scan.collect_schema().names()
+                date_col = "trade_date" if "trade_date" in cols else ("date" if "date" in cols else None)
+                if date_col:
+                    latest_existing = existing_scan.select(pl.col(date_col).max()).collect().item()
+                    if latest_existing is not None:
+                        if isinstance(latest_existing, str):
+                            latest_existing = datetime.date.fromisoformat(latest_existing)
+                        elif isinstance(latest_existing, datetime.datetime):
+                            latest_existing = latest_existing.date()
+                        if start_date is None and latest_existing < fetch_start:
+                            fetch_start = latest_existing
+            except Exception as exc:
+                logger.debug("Could not inspect existing underlying EOD file for %s: %s", sym, exc)
+
         try:
             if sym in INDEX_ROOTS:
                 df = self.main_client.index_history_eod(
                     symbol=sym,
-                    start_date=self.config.start_date,
+                    start_date=fetch_start,
                     end_date=self.config.end_date,
                 )
             else:
                 df = self.main_client.stock_history_eod(
                     symbol=sym,
-                    start_date=self.config.start_date,
+                    start_date=fetch_start,
                     end_date=self.config.end_date,
                 )
             if not df.is_empty():

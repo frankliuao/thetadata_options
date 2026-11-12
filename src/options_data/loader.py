@@ -10,6 +10,7 @@ from typing import Literal
 import polars as pl
 
 from options_data.gdrive_sync import DEFAULT_GDRIVE_FOLDER_ID, GoogleDriveSync
+from options_data.schema import validate_symbol
 
 
 def _scan_parquet_files(files: list[Path]) -> pl.LazyFrame:
@@ -49,7 +50,7 @@ class OptionsDataLoader:
         years: list[int] | None = None,
     ) -> list[Path]:
         """Ensure Parquet files for `symbol` exist locally, pulling on-demand from Google Drive if missing."""
-        sym = symbol.upper()
+        sym = validate_symbol(symbol)
         processed_dir = self.data_dir / "processed" / "options_eod" / f"symbol={sym}"
         existing = sorted(processed_dir.glob("*.parquet")) if processed_dir.exists() else []
         if years is not None:
@@ -81,18 +82,19 @@ class OptionsDataLoader:
         years: list[int] | None = None,
     ) -> pl.LazyFrame:
         """Return a Polars LazyFrame scanning all Parquet files for `symbol`."""
-        sym = symbol.upper()
+        sym = validate_symbol(symbol)
         processed_dir = self.data_dir / "processed" / "options_eod" / f"symbol={sym}"
         raw_dir = self.data_dir / "raw" / "options_eod" / f"symbol={sym}"
 
         if self.auto_fetch_gdrive:
             self.ensure_local_parquets(sym, years=years)
 
+        year_set = set(years) if years is not None else None
+
         processed_files: list[Path] = []
         if use_consolidated and processed_dir.exists():
             all_proc = sorted(processed_dir.glob("*.parquet"))
-            if years is not None:
-                year_set = set(years)
+            if year_set is not None:
                 processed_files = [
                     p for p in all_proc
                     if p.stem.split("_")[-1].isdigit() and int(p.stem.split("_")[-1]) in year_set
@@ -102,7 +104,12 @@ class OptionsDataLoader:
 
         raw_files: list[Path] = []
         if raw_dir.exists():
-            raw_files = sorted(raw_dir.glob("year=*/*.parquet"))
+            if year_set is not None:
+                for yr in sorted(year_set):
+                    raw_files.extend((raw_dir / f"year={yr}").glob("*.parquet"))
+                raw_files = sorted(raw_files)
+            else:
+                raw_files = sorted(raw_dir.glob("year=*/*.parquet"))
 
         if not processed_files and not raw_files:
             raise FileNotFoundError(
@@ -136,10 +143,13 @@ class OptionsDataLoader:
             try:
                 date_str = rf.stem.replace(f"{sym}_", "")
                 rf_date = datetime.date.fromisoformat(date_str)
+                if year_set is not None and rf_date.year not in year_set:
+                    continue
                 if rf_date not in covered_dates:
                     unconsolidated_raw.append(rf)
             except Exception:
-                unconsolidated_raw.append(rf)
+                if year_set is None:
+                    unconsolidated_raw.append(rf)
 
         sources = [_scan_parquet_files(processed_files)]
         if unconsolidated_raw:
@@ -181,7 +191,7 @@ class OptionsDataLoader:
         - `max_abs_delta`: Absolute delta upper bound (e.g. 0.35).
         - `min_bid`: Minimum bid price filter.
         """
-        lf = self.scan_symbol(symbol)
+        sym = validate_symbol(symbol)
 
         if trade_date is not None:
             if isinstance(trade_date, str):
@@ -195,6 +205,16 @@ class OptionsDataLoader:
             start_date = datetime.date.fromisoformat(start_date)
         if isinstance(end_date, str):
             end_date = datetime.date.fromisoformat(end_date)
+
+        query_years: list[int] | None = None
+        if start_date is not None and end_date is not None:
+            query_years = list(range(start_date.year, end_date.year + 1))
+        elif start_date is not None:
+            query_years = [start_date.year]
+        elif end_date is not None:
+            query_years = [end_date.year]
+
+        lf = self.scan_symbol(sym, years=query_years)
 
         if start_date is not None:
             lf = lf.filter(pl.col("trade_date") >= start_date)

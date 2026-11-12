@@ -27,6 +27,7 @@ from rich.console import Console
 
 from options_data.gdrive_sync import DEFAULT_GDRIVE_FOLDER_ID
 from options_data.loader import OptionsDataLoader
+from options_data.schema import validate_symbol
 from options_data.universe import DEFAULT_UNIVERSE_CSV
 
 console = Console()
@@ -117,7 +118,7 @@ class OptionsViewerBackend:
 
     def get_symbol_metadata(self, symbol: str, year: int | None = None) -> dict[str, Any]:
         """Return available years, expirations, trade dates, and summary stats for `symbol`."""
-        sym = symbol.strip().upper()
+        sym = validate_symbol(symbol)
         years_filter = [year] if year is not None else None
         lf = self.loader.scan_symbol(sym, years=years_filter)
 
@@ -167,7 +168,7 @@ class OptionsViewerBackend:
         year: int | None = None,
     ) -> dict[str, Any]:
         """Return available strikes and contract metadata for `(symbol, expiration)`."""
-        sym = symbol.strip().upper()
+        sym = validate_symbol(symbol)
         exp_date = datetime.date.fromisoformat(expiration)
         years_filter = [year] if year is not None else None
         lf = self.loader.scan_symbol(sym, years=years_filter).filter(pl.col("expiration") == exp_date)
@@ -222,7 +223,7 @@ class OptionsViewerBackend:
         year: int | None = None,
     ) -> dict[str, Any]:
         """Return full daily price, IV, Open Interest, and Greeks time series for a specific option contract."""
-        sym = symbol.strip().upper()
+        sym = validate_symbol(symbol)
         exp_date = datetime.date.fromisoformat(expiration)
         right_clean = right.strip().lower()
         # Note: a contract expiring in `exp_date` may have traded in `exp_date.year` and `exp_date.year - 1`
@@ -255,7 +256,7 @@ class OptionsViewerBackend:
         expiration: str | None = None,
     ) -> dict[str, Any]:
         """Return cross-sectional option chain on `trade_date` for IV Smile & Greeks-by-Strike visualization."""
-        sym = symbol.strip().upper()
+        sym = validate_symbol(symbol)
         td = datetime.date.fromisoformat(trade_date)
         lf = self.loader.scan_symbol(sym, years=[td.year]).filter(pl.col("trade_date") == td)
 
@@ -288,7 +289,7 @@ class OptionsViewerBackend:
 
     def fetch_from_gdrive(self, symbol: str, year: int | None = None) -> dict[str, Any]:
         """Explicitly pull `symbol` (and optional `year`) from Google Drive into local cache."""
-        sym = symbol.strip().upper()
+        sym = validate_symbol(symbol)
         years = [year] if year is not None else None
         if self.loader.gdrive is None:
             raise RuntimeError("Google Drive folder ID is not configured.")
@@ -1248,15 +1249,21 @@ def make_handler(backend: OptionsViewerBackend) -> type[BaseHTTPRequestHandler]:
                     self._send_json({"symbols": backend.list_symbols()})
                     return
 
+                if path in ("/api/metadata", "/api/contracts", "/api/timeseries", "/api/smile", "/api/gdrive-pull"):
+                    sym_raw = qs.get("symbol", ["AAPL"])[0]
+                    try:
+                        sym = validate_symbol(sym_raw)
+                    except ValueError as sym_err:
+                        self._send_json({"error": str(sym_err)}, status=400)
+                        return
+
                 if path == "/api/metadata":
-                    sym = qs.get("symbol", ["AAPL"])[0]
                     yr_raw = qs.get("year", [None])[0]
                     yr = int(yr_raw) if yr_raw and yr_raw.isdigit() else None
                     self._send_json(backend.get_symbol_metadata(sym, year=yr))
                     return
 
                 if path == "/api/contracts":
-                    sym = qs.get("symbol", ["AAPL"])[0]
                     exp = qs.get("expiration", [""])[0]
                     yr_raw = qs.get("year", [None])[0]
                     yr = int(yr_raw) if yr_raw and yr_raw.isdigit() else None
@@ -1264,7 +1271,6 @@ def make_handler(backend: OptionsViewerBackend) -> type[BaseHTTPRequestHandler]:
                     return
 
                 if path == "/api/timeseries":
-                    sym = qs.get("symbol", ["AAPL"])[0]
                     exp = qs.get("expiration", [""])[0]
                     strike = float(qs.get("strike", ["100"])[0])
                     right = qs.get("right", ["call"])[0]
@@ -1274,14 +1280,12 @@ def make_handler(backend: OptionsViewerBackend) -> type[BaseHTTPRequestHandler]:
                     return
 
                 if path == "/api/smile":
-                    sym = qs.get("symbol", ["AAPL"])[0]
                     td = qs.get("trade_date", [""])[0]
                     exp = qs.get("expiration", [None])[0]
                     self._send_json(backend.get_chain_smile(sym, td, expiration=exp))
                     return
 
                 if path == "/api/gdrive-pull":
-                    sym = qs.get("symbol", ["AAPL"])[0]
                     yr_raw = qs.get("year", [None])[0]
                     yr = int(yr_raw) if yr_raw and yr_raw.isdigit() else None
                     self._send_json(backend.fetch_from_gdrive(sym, year=yr))
@@ -1302,8 +1306,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--host",
-        default="0.0.0.0",
-        help="Host interface to bind (default: 0.0.0.0 for local + Tailscale access).",
+        default="127.0.0.1",
+        help="Host interface to bind (default: 127.0.0.1; use 0.0.0.0 for LAN/Tailscale access).",
     )
     parser.add_argument(
         "-p",

@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 import datetime
+import re
 from pathlib import Path
 
 import polars as pl
+
+# One path component. Slashes and ".." are rejected so a ticker cannot escape data_dir.
+_SYMBOL_RE = re.compile(r"^[A-Z][A-Z0-9.]{0,9}$")
+
+
+def validate_symbol(symbol: str) -> str:
+    """Return a normalized ticker, or raise if it is not safe to use as a path component."""
+    sym = symbol.strip().upper()
+    if not _SYMBOL_RE.fullmatch(sym):
+        raise ValueError(
+            f"Invalid ticker {symbol!r}. Expected 1-10 characters using A-Z, digits, or '.'."
+        )
+    return sym
 
 # Columns returned by ThetaData option_history_greeks_eod / option_history_binomial_greeks_eod
 # Note: ThetaData v3 returns some Greeks (like theta, vanna, color, ultima, epsilon, dual_delta)

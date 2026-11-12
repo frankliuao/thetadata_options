@@ -14,12 +14,14 @@ import polars as pl
 from options_data.cli import main as download_main
 from options_data.downloader import (
     DownloadConfig,
+    ThetaOptionsDownloader,
     load_merged_options_year,
     nyse_today,
     to_option_root,
     validate_symbol,
 )
 from options_data.gdrive_sync import get_gdrive_base_cmd
+from options_data.loader import OptionsDataLoader
 from options_data.schema import date_expr, merge_underlying_frames, normalize_options_df
 from options_data.universe import load_universe_symbols
 from options_data.updater import IncrementalOptionsUpdater, find_latest_downloaded_date
@@ -712,7 +714,94 @@ class MockCliTests(unittest.TestCase):
             # d2 was .empty, so updater should NOT request d2; only missing day d3 should be requested!
             requested_days = [call.args[1] for call in dl.download_day.call_args_list]
             self.assertEqual(requested_days, [d3])
-            dl.download_underlying_eod.assert_called_with("SPY")
+            dl.download_underlying_eod.assert_called_with("SPY", start_date=d3)
+
+    def test_empty_sentinel_never_written_for_today(self) -> None:
+        """EOD data requested for today before ready must never create durable .empty sentinel."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            today = nyse_today()
+            cfg = DownloadConfig(symbols=["SPY"], data_dir=root, sync_to_gdrive=False)
+            mock_client = unittest.mock.MagicMock()
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+            dl._fetch_single_day_options = unittest.mock.MagicMock(return_value=pl.DataFrame())
+
+            res_date, count, status = dl.download_day("SPY", today)
+            self.assertEqual(status, "not_ready")
+            empty_marker = dl.daily_parquet_path("SPY", today).with_suffix(".empty")
+            self.assertFalse(empty_marker.exists())
+
+    def test_year_filter_excludes_other_years_raw_files(self) -> None:
+        """scan_symbol with years=[2024] must strictly exclude raw files from year=2025."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            raw_2024 = root / "raw" / "options_eod" / "symbol=SPY" / "year=2024"
+            raw_2025 = root / "raw" / "options_eod" / "symbol=SPY" / "year=2025"
+            raw_2024.mkdir(parents=True, exist_ok=True)
+            raw_2025.mkdir(parents=True, exist_ok=True)
+
+            df_2024 = pl.DataFrame({
+                "symbol": ["SPY"],
+                "trade_date": [datetime.date(2024, 6, 3)],
+                "expiration": [datetime.date(2024, 6, 21)],
+                "strike": [500.0],
+                "right": ["call"],
+                "bid": [2.0],
+                "ask": [2.2],
+            })
+            df_2025 = pl.DataFrame({
+                "symbol": ["SPY"],
+                "trade_date": [datetime.date(2025, 1, 6)],
+                "expiration": [datetime.date(2025, 1, 17)],
+                "strike": [600.0],
+                "right": ["call"],
+                "bid": [3.0],
+                "ask": [3.2],
+            })
+            df_2024.write_parquet(raw_2024 / "SPY_2024-06-03.parquet")
+            df_2025.write_parquet(raw_2025 / "SPY_2025-01-06.parquet")
+
+            loader = OptionsDataLoader(data_dir=root)
+            lf_2024 = loader.scan_symbol("SPY", years=[2024])
+            res_dates = lf_2024.select(pl.col("trade_date")).collect()["trade_date"].to_list()
+            self.assertEqual(res_dates, [datetime.date(2024, 6, 3)])
+
+    def test_loader_rejects_path_traversal_symbols(self) -> None:
+        """OptionsDataLoader must reject traversal tickers like '../../etc'."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            loader = OptionsDataLoader(data_dir=tmpdir)
+            with self.assertRaises(ValueError):
+                loader.scan_symbol("../SPY")
+            with self.assertRaises(ValueError):
+                loader.ensure_local_parquets("SPY/..")
+
+    def test_underlying_catchup_covers_gap_older_than_90_days(self) -> None:
+        """download_underlying_eod must start from existing file's latest date if older than start_date."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            und_dir = root / "raw" / "underlying_eod"
+            und_dir.mkdir(parents=True, exist_ok=True)
+            old_date = datetime.date(2023, 6, 1)
+            pl.DataFrame({
+                "symbol": ["SPY"],
+                "trade_date": [old_date],
+                "close": [420.0],
+            }).write_parquet(und_dir / "SPY_eod.parquet")
+
+            cfg = DownloadConfig(
+                symbols=["SPY"],
+                data_dir=root,
+                start_date=datetime.date(2024, 1, 1),
+                end_date=datetime.date(2024, 2, 1),
+                sync_to_gdrive=False,
+            )
+            mock_client = unittest.mock.MagicMock()
+            mock_client.stock_history_eod.return_value = pl.DataFrame()
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+            dl.download_underlying_eod("SPY")
+
+            call_args = mock_client.stock_history_eod.call_args
+            self.assertEqual(call_args.kwargs["start_date"], old_date)
 
 
 if __name__ == "__main__":

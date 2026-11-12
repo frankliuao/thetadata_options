@@ -244,7 +244,8 @@ class IncrementalOptionsUpdater:
             if cfg.include_underlying_eod:
                 try:
                     self.downloader.config.end_date = end_date
-                    self.downloader.download_underlying_eod(sym)
+                    und_start = missing_days[0] if missing_days else cfg.start_date
+                    self.downloader.download_underlying_eod(sym, start_date=und_start)
                 except Exception as und_err:
                     logger.debug("Underlying EOD update skipped for %s: %s", sym, und_err)
 
