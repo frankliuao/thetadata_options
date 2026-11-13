@@ -736,6 +736,33 @@ INDEX_HTML = r"""<!DOCTYPE html>
       modeBarButtonsToRemove: ['select2d', 'lasso2d'],
     };
 
+    function parsePlotlyDate(val) {
+      if (typeof val === 'number') return val;
+      if (!val) return NaN;
+      if (typeof val === 'string') {
+        const s = val.trim().replace(' ', 'T');
+        const iso = (s.includes('Z') || s.includes('+') || (s.length > 10 && s.slice(10).includes('-'))) ? s : s + 'Z';
+        const t = Date.parse(iso);
+        if (!isNaN(t)) return t;
+        return Date.parse(val);
+      }
+      if (val instanceof Date) return val.getTime();
+      return Number(val);
+    }
+
+    function formatPlotlyDate(ms) {
+      const d = new Date(ms);
+      if (isNaN(d.getTime())) return '';
+      const pad = n => String(n).padStart(2, '0');
+      const yyyy = d.getUTCFullYear();
+      const mm = pad(d.getUTCMonth() + 1);
+      const dd = pad(d.getUTCDate());
+      const hh = pad(d.getUTCHours());
+      const mi = pad(d.getUTCMinutes());
+      const ss = pad(d.getUTCSeconds());
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+
     function attachTradingViewInteractions(gd) {
       if (!gd || gd._tv_attached) return;
       gd._tv_attached = true;
@@ -809,8 +836,8 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const isDate = (axisKey === 'xaxis' && (ax.type === 'date' || (typeof ax.range[0] === 'string' && ax.range[0].includes('-'))));
         let startMin, startMax;
         if (isDate) {
-          startMin = new Date(ax.range[0]).getTime();
-          startMax = new Date(ax.range[1]).getTime();
+          startMin = parsePlotlyDate(ax.range[0]);
+          startMax = parsePlotlyDate(ax.range[1]);
         } else {
           startMin = Number(ax.range[0]);
           startMax = Number(ax.range[1]);
@@ -872,8 +899,8 @@ INDEX_HTML = r"""<!DOCTYPE html>
           let rangeVal;
           if (dragCtx.isDate) {
             rangeVal = [
-              new Date(newMin).toISOString().replace('T', ' ').slice(0, 19),
-              new Date(newMax).toISOString().replace('T', ' ').slice(0, 19)
+              formatPlotlyDate(newMin),
+              formatPlotlyDate(newMax)
             ];
           } else {
             rangeVal = [newMin, newMax];
@@ -935,8 +962,8 @@ INDEX_HTML = r"""<!DOCTYPE html>
         if (gd._tv_pendingRange[targetAxis]) {
           [curMin, curMax] = gd._tv_pendingRange[targetAxis];
         } else if (isDate) {
-          curMin = new Date(ax.range[0]).getTime();
-          curMax = new Date(ax.range[1]).getTime();
+          curMin = parsePlotlyDate(ax.range[0]);
+          curMax = parsePlotlyDate(ax.range[1]);
         } else {
           curMin = Number(ax.range[0]);
           curMax = Number(ax.range[1]);
@@ -969,8 +996,8 @@ INDEX_HTML = r"""<!DOCTYPE html>
           let rangeVal;
           if (isDate) {
             rangeVal = [
-              new Date(pending[0]).toISOString().replace('T', ' ').slice(0, 19),
-              new Date(pending[1]).toISOString().replace('T', ' ').slice(0, 19)
+              formatPlotlyDate(pending[0]),
+              formatPlotlyDate(pending[1])
             ];
           } else {
             rangeVal = [pending[0], pending[1]];
