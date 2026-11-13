@@ -1,0 +1,63 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Distribution & Build
+dist/
+build/
+*.egg-info/
+
+# Secrets, Credentials & Local configs
+.env
+.env.*
+!.env.example
+creds.txt
+*.pem
+*.key
+
+# Downloaded market data & archives
+data/
+logs/
+*.parquet
+*.parquet.tmp
+.empty
+sp500_latest_prices.csv
+*latest_prices*.csv
+
+# Local scratch scripts, caches & generated CSVs in root
+*.png
+*.jpg
+*.jpeg
+*.avif
+/audit_*.py
+/build_*.py
+/prepare_*.py
+/strict_*.py
+/update_all_*.py
+/verified_*.py
+/verify_*.py
+/check_*.py
+/apply_*.py
+/test_*.py
+events_cache/
+sp500_active_universe.csv
+sp500_all_events_flat.csv
+sp500_historical_major_events_2016_2026.csv
+sp500_inactive_excluded.csv
+sp500_sample_events_approval*.csv
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
