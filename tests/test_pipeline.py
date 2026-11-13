@@ -609,6 +609,18 @@ class MockCliTests(unittest.TestCase):
             self.assertEqual(len(smile["chain"]), 2)
             self.assertEqual(smile["underlying_price"], 503.5)
 
+    def test_viewer_html_chart_layout_separation(self) -> None:
+        """Dashboard HTML chart layouts must cleanly separate title and horizontal legend to prevent overlap."""
+        from options_data.viewer import INDEX_HTML
+
+        self.assertIn("margin: { l: 55, r: 50, t: 84, b: 40 }", INDEX_HTML)
+        self.assertIn("yref: 'container'", INDEX_HTML)
+        self.assertIn("yanchor: 'top'", INDEX_HTML)
+        self.assertIn("yanchor: 'bottom'", INDEX_HTML)
+        self.assertIn(".js-plotly-plot .gtitle", INDEX_HTML)
+        self.assertIn("function parsePlotlyDate", INDEX_HTML)
+        self.assertIn("function formatPlotlyDate", INDEX_HTML)
+
     def test_query_chain_trade_date_and_delta_parameters(self) -> None:
         """query_chain supports trade_date and signed min_delta/max_delta without TypeError."""
         from options_data.loader import OptionsDataLoader

@@ -480,10 +480,11 @@ INDEX_HTML = r"""<!DOCTYPE html>
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px;
-      min-height: 360px;
+      min-height: 385px;
     }
     .chart-box.full-width {
       grid-column: 1 / -1;
+      min-height: 425px;
     }
     .table-container {
       padding: 0 20px 24px;
@@ -521,6 +522,43 @@ INDEX_HTML = r"""<!DOCTYPE html>
       gap: 10px;
     }
     .hidden { display: none !important; }
+
+    /* TradingView Interaction Styling */
+    .js-plotly-plot {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .js-plotly-plot .gtitle {
+      font-weight: 600 !important;
+    }
+    .js-plotly-plot .draglayer .nsewdrag {
+      cursor: grab !important;
+    }
+    .js-plotly-plot .draglayer .nsewdrag:active {
+      cursor: grabbing !important;
+    }
+    .tv-hint-bar {
+      margin: 0 20px 12px 20px;
+      padding: 7px 14px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 6px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tv-hint-bar b {
+      color: var(--accent);
+    }
+    .tv-hint-bar .shortcut {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: var(--text-main);
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
@@ -579,6 +617,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
     <button class="tab-btn" id="tab-btn-table" onclick="switchTab('table')">📋 Raw Contract Data & CSV Export</button>
   </div>
 
+  <div class="tv-hint-bar">
+    <span>💡 <b>TradingView Interactivity</b>: Click &amp; drag chart body to <span class="shortcut">Pan</span> • Drag Y-axis vertically to <span class="shortcut">Stretch/Compress Price</span> • Drag X-axis horizontally to <span class="shortcut">Scale Timeline</span> • Scroll wheel to <span class="shortcut">Zoom (Cursor-Anchored)</span> • Double-click axis or chart to <span class="shortcut">Auto-fit</span></span>
+  </div>
+
   <!-- KPI Summary Strip -->
   <div class="kpi-strip" id="kpi-strip">
     <div class="kpi-card">
@@ -620,7 +662,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
   <!-- TAB 1: Contract Lifecycle Charts -->
   <div id="view-lifecycle" class="grid-charts">
-    <div class="chart-box full-width" id="chart-price" style="min-height:400px;"></div>
+    <div class="chart-box full-width" id="chart-price" style="min-height:425px;"></div>
     <div class="chart-box" id="chart-greeks-1"></div>
     <div class="chart-box" id="chart-greeks-2"></div>
     <div class="chart-box" id="chart-iv-oi"></div>
@@ -663,12 +705,385 @@ INDEX_HTML = r"""<!DOCTYPE html>
       paper_bgcolor: '#111827',
       plot_bgcolor: '#111827',
       font: { color: '#e2e8f0', size: 11 },
-      margin: { l: 55, r: 50, t: 42, b: 40 },
+      margin: { l: 55, r: 50, t: 84, b: 40 },
+      dragmode: 'pan',
+      title: {
+        x: 0.01,
+        xanchor: 'left',
+        y: 0.98,
+        yref: 'container',
+        yanchor: 'top',
+        font: { size: 13, color: '#f8fafc' },
+        pad: { l: 0, t: 4, b: 0 }
+      },
+      legend: {
+        orientation: 'h',
+        y: 1.02,
+        yanchor: 'bottom',
+        x: 0.01,
+        xanchor: 'left',
+        font: { size: 11, color: '#94a3b8' }
+      },
       xaxis: { gridcolor: '#1e293b', zerolinecolor: '#334155' },
       yaxis: { gridcolor: '#1e293b', zerolinecolor: '#334155' },
-      legend: { orientation: 'h', y: 1.12, x: 0 },
       hovermode: 'x unified'
     };
+
+    const plotConfig = {
+      responsive: true,
+      displaylogo: false,
+      showAxisDragHandles: false,
+      modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+    };
+
+    function parsePlotlyDate(val) {
+      if (typeof val === 'number') return val;
+      if (!val) return NaN;
+      if (typeof val === 'string') {
+        const s = val.trim().replace(' ', 'T');
+        const iso = (s.includes('Z') || s.includes('+') || (s.length > 10 && s.slice(10).includes('-'))) ? s : s + 'Z';
+        const t = Date.parse(iso);
+        if (!isNaN(t)) return t;
+        return Date.parse(val);
+      }
+      if (val instanceof Date) return val.getTime();
+      return Number(val);
+    }
+
+    function formatPlotlyDate(ms) {
+      const d = new Date(ms);
+      if (isNaN(d.getTime())) return '';
+      const pad = n => String(n).padStart(2, '0');
+      const yyyy = d.getUTCFullYear();
+      const mm = pad(d.getUTCMonth() + 1);
+      const dd = pad(d.getUTCDate());
+      const hh = pad(d.getUTCHours());
+      const mi = pad(d.getUTCMinutes());
+      const ss = pad(d.getUTCSeconds());
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+
+    function attachTradingViewInteractions(gd) {
+      if (!gd || gd._tv_attached) return;
+      gd._tv_attached = true;
+
+      let dragCtx = null;
+      let rafId = null;
+
+      gd.addEventListener('mousemove', function(e) {
+        if (dragCtx) return;
+        if (!gd._fullLayout) return;
+
+        const rect = gd.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const w = rect.width;
+        const h = rect.height;
+
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
+
+        const hasY2 = !!gd._fullLayout.yaxis2;
+
+        if (y >= h - mb - 5 && x >= ml && x <= w - mr) {
+          gd.style.cursor = 'ew-resize';
+        } else if (x <= ml + 5 && y >= mt && y <= h - mb) {
+          gd.style.cursor = 'ns-resize';
+        } else if (hasY2 && x >= w - mr - 5 && y >= mt && y <= h - mb) {
+          gd.style.cursor = 'ns-resize';
+        } else {
+          gd.style.cursor = '';
+        }
+      });
+
+      gd.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return;
+        if (!gd._fullLayout) return;
+
+        const rect = gd.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const w = rect.width;
+        const h = rect.height;
+
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
+
+        const hasY2 = !!gd._fullLayout.yaxis2;
+
+        let axisKey = null;
+        if (y >= h - mb - 5 && x >= ml && x <= w - mr) {
+          axisKey = 'xaxis';
+        } else if (x <= ml + 5 && y >= mt && y <= h - mb) {
+          axisKey = 'yaxis';
+        } else if (hasY2 && x >= w - mr - 5 && y >= mt && y <= h - mb) {
+          axisKey = 'yaxis2';
+        }
+
+        if (!axisKey) return;
+
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        e.preventDefault();
+
+        const ax = gd._fullLayout[axisKey];
+        if (!ax || !ax.range) return;
+
+        const isDate = (axisKey === 'xaxis' && (ax.type === 'date' || (typeof ax.range[0] === 'string' && ax.range[0].includes('-'))));
+        let startMin, startMax;
+        if (isDate) {
+          startMin = parsePlotlyDate(ax.range[0]);
+          startMax = parsePlotlyDate(ax.range[1]);
+        } else {
+          startMin = Number(ax.range[0]);
+          startMax = Number(ax.range[1]);
+        }
+
+        const startSpan = startMax - startMin;
+        if (!startSpan || isNaN(startSpan)) return;
+
+        let anchorVal;
+        if (axisKey === 'xaxis') {
+          const frac = Math.max(0, Math.min(1, (x - ml) / (w - ml - mr)));
+          anchorVal = startMin + frac * startSpan;
+        } else {
+          const frac = Math.max(0, Math.min(1, (h - mb - y) / (h - mt - mb)));
+          anchorVal = startMin + frac * startSpan;
+        }
+
+        dragCtx = {
+          axisKey,
+          isDate,
+          startMin,
+          startMax,
+          startSpan,
+          anchorVal,
+          startX: e.clientX,
+          startY: e.clientY
+        };
+
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = (axisKey === 'xaxis') ? 'ew-resize' : 'ns-resize';
+
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
+        window.addEventListener('mouseup', onMouseUp);
+      }, true);
+
+      function onMouseMove(e) {
+        if (!dragCtx) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dx = e.clientX - dragCtx.startX;
+        const dy = e.clientY - dragCtx.startY;
+
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          if (!dragCtx) return;
+          let factor;
+          if (dragCtx.axisKey === 'xaxis') {
+            factor = Math.exp(-dx * 0.006);
+          } else {
+            factor = Math.exp(dy * 0.006);
+          }
+          factor = Math.max(0.01, Math.min(100, factor));
+
+          const a = dragCtx.anchorVal;
+          const newMin = a - (a - dragCtx.startMin) * factor;
+          const newMax = a + (dragCtx.startMax - a) * factor;
+
+          let rangeVal;
+          if (dragCtx.isDate) {
+            rangeVal = [
+              formatPlotlyDate(newMin),
+              formatPlotlyDate(newMax)
+            ];
+          } else {
+            rangeVal = [newMin, newMax];
+          }
+
+          Plotly.relayout(gd, {
+            [`${dragCtx.axisKey}.range`]: rangeVal,
+            [`${dragCtx.axisKey}.autorange`]: false
+          });
+        });
+      }
+
+      function onMouseUp() {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        dragCtx = null;
+      }
+
+      gd.addEventListener('wheel', function(e) {
+        if (!gd._fullLayout) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = gd.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const w = rect.width;
+        const h = rect.height;
+
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
+
+        const hasY2 = !!gd._fullLayout.yaxis2;
+
+        let targetAxis = 'xaxis';
+        if (x <= ml + 5) {
+          targetAxis = 'yaxis';
+        } else if (hasY2 && x >= w - mr - 5) {
+          targetAxis = 'yaxis2';
+        } else if (e.ctrlKey || e.metaKey) {
+          targetAxis = 'yaxis';
+        }
+
+        const ax = gd._fullLayout[targetAxis];
+        if (!ax || !ax.range) return;
+
+        const isDate = (targetAxis === 'xaxis' && (ax.type === 'date' || (typeof ax.range[0] === 'string' && ax.range[0].includes('-'))));
+
+        gd._tv_pendingRange = gd._tv_pendingRange || {};
+        let curMin, curMax;
+        if (gd._tv_pendingRange[targetAxis]) {
+          [curMin, curMax] = gd._tv_pendingRange[targetAxis];
+        } else if (isDate) {
+          curMin = parsePlotlyDate(ax.range[0]);
+          curMax = parsePlotlyDate(ax.range[1]);
+        } else {
+          curMin = Number(ax.range[0]);
+          curMax = Number(ax.range[1]);
+        }
+
+        const curSpan = curMax - curMin;
+        if (!curSpan || isNaN(curSpan)) return;
+
+        const factor = e.deltaY < 0 ? 0.88 : 1.14;
+
+        let anchor;
+        if (targetAxis === 'xaxis') {
+          const frac = Math.max(0, Math.min(1, (x - ml) / (w - ml - mr)));
+          anchor = curMin + frac * curSpan;
+        } else {
+          const frac = Math.max(0, Math.min(1, (h - mb - y) / (h - mt - mb)));
+          anchor = curMin + frac * curSpan;
+        }
+
+        const newMin = anchor - (anchor - curMin) * factor;
+        const newMax = anchor + (curMax - anchor) * factor;
+        gd._tv_pendingRange[targetAxis] = [newMin, newMax];
+
+        if (gd._tv_wheelRaf) cancelAnimationFrame(gd._tv_wheelRaf);
+        gd._tv_wheelRaf = requestAnimationFrame(() => {
+          const pending = gd._tv_pendingRange[targetAxis];
+          if (!pending) return;
+          delete gd._tv_pendingRange[targetAxis];
+
+          let rangeVal;
+          if (isDate) {
+            rangeVal = [
+              formatPlotlyDate(pending[0]),
+              formatPlotlyDate(pending[1])
+            ];
+          } else {
+            rangeVal = [pending[0], pending[1]];
+          }
+
+          Plotly.relayout(gd, {
+            [`${targetAxis}.range`]: rangeVal,
+            [`${targetAxis}.autorange`]: false
+          });
+        });
+      }, { passive: false });
+
+      gd.addEventListener('dblclick', function(e) {
+        if (!gd._fullLayout) return;
+        const rect = gd.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const w = rect.width;
+        const h = rect.height;
+
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
+
+        const hasY2 = !!gd._fullLayout.yaxis2;
+
+        if (y >= h - mb - 5 && x >= ml && x <= w - mr) {
+          e.stopPropagation();
+          e.preventDefault();
+          Plotly.relayout(gd, { 'xaxis.autorange': true });
+        } else if (x <= ml + 5) {
+          e.stopPropagation();
+          e.preventDefault();
+          Plotly.relayout(gd, { 'yaxis.autorange': true });
+        } else if (hasY2 && x >= w - mr - 5) {
+          e.stopPropagation();
+          e.preventDefault();
+          Plotly.relayout(gd, { 'yaxis2.autorange': true });
+        } else {
+          e.stopPropagation();
+          e.preventDefault();
+          const resetObj = { 'xaxis.autorange': true, 'yaxis.autorange': true };
+          if (hasY2) resetObj['yaxis2.autorange'] = true;
+          Plotly.relayout(gd, resetObj);
+        }
+      }, true);
+    }
+
+    function renderPlot(domId, traces, layout = {}) {
+      const mergedTitle = typeof layout.title === 'string'
+        ? { text: layout.title }
+        : (layout.title || {});
+
+      const mergedLayout = {
+        ...plotLayoutBase,
+        ...layout,
+        dragmode: 'pan',
+        title: {
+          ...plotLayoutBase.title,
+          ...mergedTitle,
+          font: { ...plotLayoutBase.title.font, ...(mergedTitle.font || {}) },
+        },
+        legend: {
+          ...plotLayoutBase.legend,
+          ...(layout.legend || {}),
+          font: { ...plotLayoutBase.legend.font, ...(layout.legend && layout.legend.font ? layout.legend.font : {}) },
+        },
+        margin: {
+          ...plotLayoutBase.margin,
+          ...(layout.margin || {}),
+        },
+        xaxis: { ...plotLayoutBase.xaxis, ...(layout.xaxis || {}) },
+        yaxis: { ...plotLayoutBase.yaxis, ...(layout.yaxis || {}) },
+      };
+      if (layout.yaxis2) {
+        mergedLayout.yaxis2 = {
+          ...plotLayoutBase.yaxis,
+          ...layout.yaxis2
+        };
+      }
+      return Plotly.newPlot(domId, traces, mergedLayout, plotConfig).then(gd => {
+        attachTradingViewInteractions(gd);
+        return gd;
+      });
+    }
 
     function setStatus(msg) {
       document.getElementById('status-msg').textContent = msg;
@@ -862,7 +1277,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const dates = rows.map(r => r.trade_date);
 
       // Chart 1: Option Mid/Bid/Ask Price vs Underlying Price
-      Plotly.newPlot('chart-price', [
+      renderPlot('chart-price', [
         {
           x: dates, y: rows.map(r => r.ask),
           name: 'Option Ask', mode: 'lines',
@@ -891,19 +1306,18 @@ INDEX_HTML = r"""<!DOCTYPE html>
           line: { color: '#ef4444', width: 1.2, dash: 'dash' }
         }
       ], {
-        ...plotLayoutBase,
         title: { text: `${data.symbol} ${data.expiration} $${data.strike} ${data.right.toUpperCase()} — Option Price vs Underlying Spot`, font: { size: 13 } },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Option Price ($)' },
+        yaxis: { title: 'Option Price ($)' },
         yaxis2: {
           title: 'Underlying Price ($)',
           overlaying: 'y',
           side: 'right',
           gridcolor: 'transparent'
         }
-      }, { responsive: true });
+      });
 
       // Chart 2: Delta & Gamma
-      Plotly.newPlot('chart-greeks-1', [
+      renderPlot('chart-greeks-1', [
         {
           x: dates, y: rows.map(r => r.delta),
           name: 'Delta (Δ)', mode: 'lines',
@@ -915,14 +1329,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
           line: { color: '#a855f7', width: 2 }
         }
       ], {
-        ...plotLayoutBase,
         title: { text: 'Directional & Convexity Greeks: Delta (Δ) & Gamma (Γ)', font: { size: 13 } },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Delta' },
+        yaxis: { title: 'Delta' },
         yaxis2: { title: 'Gamma', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
-      }, { responsive: true });
+      });
 
       // Chart 3: Theta, Vega_per_pct, Rho_per_pct
-      Plotly.newPlot('chart-greeks-2', [
+      renderPlot('chart-greeks-2', [
         {
           x: dates, y: rows.map(r => r.theta),
           name: 'Theta (Θ / day)', mode: 'lines',
@@ -939,14 +1352,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
           line: { color: '#94a3b8', width: 1.5, dash: 'dot' }
         }
       ], {
-        ...plotLayoutBase,
         title: { text: 'Time Decay & Volatility Sensitivity: Theta (Θ), Vega & Rho', font: { size: 13 } },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Theta ($/day)' },
+        yaxis: { title: 'Theta ($/day)' },
         yaxis2: { title: 'Vega / Rho ($ per 1%)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
-      }, { responsive: true });
+      });
 
       // Chart 4: Implied Volatility + Open Interest & Volume
-      Plotly.newPlot('chart-iv-oi', [
+      renderPlot('chart-iv-oi', [
         {
           x: dates, y: rows.map(r => r.open_interest),
           name: 'Open Interest', type: 'bar',
@@ -965,15 +1377,14 @@ INDEX_HTML = r"""<!DOCTYPE html>
           line: { color: '#f59e0b', width: 2.2 }
         }
       ], {
-        ...plotLayoutBase,
         barmode: 'overlay',
         title: { text: 'Implied Volatility (%) & Open Interest / Volume', font: { size: 13 } },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Implied Vol (%)' },
+        yaxis: { title: 'Implied Vol (%)' },
         yaxis2: { title: 'Contracts (OI / Volume)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
-      }, { responsive: true });
+      });
 
       // Chart 5: Higher-Order Greeks (Vanna, Charm, Vomma)
-      Plotly.newPlot('chart-higher-greeks', [
+      renderPlot('chart-higher-greeks', [
         {
           x: dates, y: rows.map(r => r.vanna),
           name: 'Vanna (dΔ/dσ)', mode: 'lines',
@@ -990,11 +1401,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
           line: { color: '#a855f7', width: 1.8 }
         }
       ], {
-        ...plotLayoutBase,
         title: { text: 'Second-Order Greeks: Vanna, Charm & Vomma', font: { size: 13 } },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Vanna / Charm' },
+        yaxis: { title: 'Vanna / Charm' },
         yaxis2: { title: 'Vomma', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
-      }, { responsive: true });
+      });
     }
 
     async function loadChainSmile() {
@@ -1032,7 +1442,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       }] : [];
 
       // Smile 1: IV vs Strike
-      Plotly.newPlot('chart-smile-iv', [
+      renderPlot('chart-smile-iv', [
         {
           x: calls.map(r => r.strike),
           y: calls.map(r => r.implied_vol != null ? r.implied_vol * 100 : null),
@@ -1046,15 +1456,14 @@ INDEX_HTML = r"""<!DOCTYPE html>
           line: { color: '#ef4444', width: 2 }
         }
       ], {
-        ...plotLayoutBase,
         shapes: spotShapes,
         title: { text: `Volatility Smile (${sym} on ${td}, Exp ${data.selected_expiration}, Spot $${spot ?? '--'})`, font: { size: 13 } },
-        xaxis: { ...plotLayoutBase.xaxis, title: 'Strike Price ($)' },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Implied Volatility (%)' }
-      }, { responsive: true });
+        xaxis: { title: 'Strike Price ($)' },
+        yaxis: { title: 'Implied Volatility (%)' }
+      });
 
       // Smile 2: Delta & Gamma across Strikes
-      Plotly.newPlot('chart-smile-delta', [
+      renderPlot('chart-smile-delta', [
         {
           x: calls.map(r => r.strike), y: calls.map(r => r.delta),
           name: 'Call Delta', mode: 'lines', line: { color: '#22c55e', width: 2 }
@@ -1068,16 +1477,15 @@ INDEX_HTML = r"""<!DOCTYPE html>
           name: 'Gamma (Γ)', yaxis: 'y2', mode: 'lines', line: { color: '#a855f7', width: 2, dash: 'dot' }
         }
       ], {
-        ...plotLayoutBase,
         shapes: spotShapes,
         title: { text: 'Delta & Gamma Profile by Strike', font: { size: 13 } },
-        xaxis: { ...plotLayoutBase.xaxis, title: 'Strike Price ($)' },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Delta' },
+        xaxis: { title: 'Strike Price ($)' },
+        yaxis: { title: 'Delta' },
         yaxis2: { title: 'Gamma', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
-      }, { responsive: true });
+      });
 
       // Smile 3: Theta & Vega across Strikes
-      Plotly.newPlot('chart-smile-gex', [
+      renderPlot('chart-smile-gex', [
         {
           x: calls.map(r => r.strike), y: calls.map(r => r.vega_per_pct ?? r.vega),
           name: 'Vega/1%', mode: 'lines', line: { color: '#38bdf8', width: 2 }
@@ -1091,16 +1499,15 @@ INDEX_HTML = r"""<!DOCTYPE html>
           name: 'Put Theta', yaxis: 'y2', mode: 'lines', line: { color: '#fb923c', width: 1.8, dash: 'dot' }
         }
       ], {
-        ...plotLayoutBase,
         shapes: spotShapes,
         title: { text: 'Vega & Theta Decay Across Strikes', font: { size: 13 } },
-        xaxis: { ...plotLayoutBase.xaxis, title: 'Strike Price ($)' },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Vega ($/1%)' },
+        xaxis: { title: 'Strike Price ($)' },
+        yaxis: { title: 'Vega ($/1%)' },
         yaxis2: { title: 'Theta ($/day)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
-      }, { responsive: true });
+      });
 
       // Smile 4: Call vs Put Open Interest Wall
-      Plotly.newPlot('chart-smile-oi', [
+      renderPlot('chart-smile-oi', [
         {
           x: calls.map(r => r.strike), y: calls.map(r => r.open_interest),
           name: 'Call Open Interest', type: 'bar', marker: { color: 'rgba(34, 197, 94, 0.7)' }
@@ -1110,13 +1517,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
           name: 'Put Open Interest', type: 'bar', marker: { color: 'rgba(239, 68, 68, 0.7)' }
         }
       ], {
-        ...plotLayoutBase,
         barmode: 'group',
         shapes: spotShapes,
         title: { text: 'Open Interest Wall by Strike (Calls vs Puts)', font: { size: 13 } },
-        xaxis: { ...plotLayoutBase.xaxis, title: 'Strike Price ($)' },
-        yaxis: { ...plotLayoutBase.yaxis, title: 'Open Interest (Contracts)' }
-      }, { responsive: true });
+        xaxis: { title: 'Strike Price ($)' },
+        yaxis: { title: 'Open Interest (Contracts)' }
+      });
 
       setStatus(`Loaded ${chain.length} contracts for ${sym} on ${td}`);
     }
