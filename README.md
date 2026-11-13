@@ -105,7 +105,7 @@ poetry run download-options --symbols SPY --start-date 2020-01-01 --end-date 202
 
 ### 3. Download the S&P 500 Universe
 
-The repository bundles a curated, actively trading universe of 575 S&P 500 constituents (`config/sp500_universe.csv`):
+The repository bundles a curated, actively trading universe of 573 S&P 500 constituents (503 Current + 70 Removed Still Trading) (`config/sp500_universe.csv`):
 
 ```bash
 # Filter options within 50 strikes of ATM and 150 DTE to optimize storage
