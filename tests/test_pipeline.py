@@ -161,12 +161,17 @@ class SymbolAndCalendarTests(unittest.TestCase):
         self.assertEqual(len(current), 503)
         self.assertEqual(len(removed), 70)
         self.assertEqual(len(active), 573)
-        self.assertEqual(len(everything), 655)
+        self.assertEqual(len(everything), 656)
         self.assertIn("OKTA", current)
         self.assertIn("BRK.B", current)
         self.assertIn("BF.B", current)
         self.assertIn("GPS", everything)
         self.assertIn("GAP", everything)
+        self.assertIn("CDAY", everything)
+        self.assertIn("DAY", everything)
+        all_default = load_universe_symbols(mode="all", include_historical_tickers=False)
+        self.assertIn("CDAY", all_default)
+        self.assertIn("DAY", all_default)
         for symbol in everything:
             validate_symbol(symbol)
 

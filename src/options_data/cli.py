@@ -56,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
             "'active' (573 stocks: 503 Current + 70 Removed but Active, default), "
             "'current' (503 Current S&P 500 only), "
             "'removed_active' (70 Removed but Active only), "
-            "'all' (573 Active + 53 Excluded/Delisted)."
+            "'all' (573 Active + 54 Excluded/Delisted)."
         ),
     )
     parser.add_argument(
