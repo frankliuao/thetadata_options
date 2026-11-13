@@ -623,6 +623,7 @@ class MockCliTests(unittest.TestCase):
         self.assertIn("showZoomHint", INDEX_HTML)
         self.assertIn("chart-zoom-overlay", INDEX_HTML)
         self.assertIn("overflow: hidden", INDEX_HTML)
+        self.assertIn("rawDelta = e.deltaX", INDEX_HTML)
 
     def test_query_chain_trade_date_and_delta_parameters(self) -> None:
         """query_chain supports trade_date and signed min_delta/max_delta without TypeError."""

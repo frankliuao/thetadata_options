@@ -1031,8 +1031,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const curSpan = curMax - curMin;
         if (!curSpan || isNaN(curSpan)) return;
 
-        // Smooth continuous exponential scaling based on wheel delta
-        let dy = e.deltaY;
+        // Smooth continuous exponential scaling based on wheel delta (handles Shift+wheel delivering deltaX on macOS)
+        let rawDelta = e.deltaY;
+        if (Math.abs(rawDelta) < 0.001 && Math.abs(e.deltaX) > 0.001) {
+          rawDelta = e.deltaX;
+        }
+        let dy = rawDelta;
         if (e.deltaMode === 1) dy *= 16;
         else if (e.deltaMode === 2) dy *= 100;
         dy = Math.max(-60, Math.min(60, dy));
