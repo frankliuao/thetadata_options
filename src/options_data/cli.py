@@ -106,9 +106,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--greeks-model",
-        choices=["binomial", "bs", "none"],
-        default="binomial",
-        help="Greeks model: 'binomial' (Cox-Ross-Rubinstein American style, recommended default for equity options/CSP/CC), 'bs' (Black-Scholes European style), or 'none' (EOD OHLC+NBBO only). Default: binomial",
+        choices=["bs", "binomial", "none"],
+        default="bs",
+        help="Greeks model: 'bs' (Black-Scholes European style, default), 'binomial' (Cox-Ross-Rubinstein American style), or 'none' (EOD OHLC+NBBO only). Default: bs",
     )
     parser.add_argument(
         "--annual-dividend",
@@ -130,14 +130,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-dte",
         type=int,
-        default=None,
-        help="Optional max Days-to-Expiration filter (e.g. 365) to reduce data size.",
+        default=150,
+        help="Optional max Days-to-Expiration filter (default: 150).",
     )
     parser.add_argument(
         "--strike-range",
         type=int,
-        default=None,
-        help="Optional number of strikes above/below ATM to fetch (default: all strikes).",
+        default=50,
+        help="Optional number of strikes above/below ATM to fetch (default: 50).",
     )
     parser.add_argument(
         "-w",

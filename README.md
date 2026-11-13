@@ -26,7 +26,7 @@ Designed specifically for quantitative researchers, algorithmic traders, and fin
 
 - **⚡ Zero-Drop Session Persistence**: Proactive 8-minute token renewal and thread-safe dynamic re-authentication completely bypasses ThetaData's ~15-minute gRPC session token TTL, enabling seamless multi-day backfills without `UNAUTHENTICATED` disconnections.
 - **📐 Quantitative Finance Greeks Standardization**: Continuous Black-Scholes/Binomial Vega & Rho derivatives ($\partial V / \partial \sigma$ and $\partial V / \partial r$) are scaled to standard financial market convention (sensitivity per 1 percentage point move) via `vega_per_pct` and `rho_per_pct`, while preserving raw vendor values.
-- **🌲 American Binomial Model Default**: Default Greeks use the 101-step Cox-Ross-Rubinstein Binomial Tree model (`option_history_binomial_greeks_eod`) to accurately price American-style equity options and account for discrete dividends and early-exercise premiums (critical for Cash-Secured Puts and Covered Calls).
+- **📈 Standardized Black-Scholes Baseline (`--greeks-model bs`, Default)**: Default Greeks use the industry-standard Black-Scholes EOD model calibrated against the SOFR risk-free yield curve and OPRA NBBO midpoints. The American Binomial Tree model (`--greeks-model binomial`, 101 steps) is also available on demand for discrete dividend and early-exercise pricing.
 - **🏷️ Dual-Class OCC Symbology Translation**: Automatically converts dual-class equity tickers to official OCC option roots (e.g. `BRK.B` → `BRKB`, `BF.B` → `BFB`) across all options endpoints, preventing missing chains on S&P 500 constituents.
 - **📊 Non-Lookahead Open Interest Alignment**: Daily OPRA open interest prints (published at ~06:30 ET) are joined to the active trade session and explicitly documented as `open_interest_prior_close` to guarantee point-in-time backtest integrity.
 - **🛡️ Null-Preserving Deduplication & Atomic Writes**: Stacking daily chains into yearly archives uses `group_by.drop_nulls().last()`, ensuring partial raw updates never erase existing open interest. Writes use `.parquet.tmp` atomic renaming to eliminate corrupted files.
@@ -122,14 +122,14 @@ poetry run download-options \
 Run daily after market close (17:15 America/New_York) to automatically detect missing days per symbol, synchronize underlying stock/index EOD data, and update your options archives:
 
 ```bash
-# Catch up all symbols in universe using default American Binomial Greeks model:
+# Catch up all symbols in universe using the default Black-Scholes Greeks model:
 poetry run update-options --workers 4
 
-# Or specify symbols and dividend parameters:
+# Or specify symbols or switch to American Binomial pricing:
 poetry run update-options --symbols SPY QQQ AAPL --greeks-model binomial --workers 4
 ```
 
-> **🌲 American Binomial Model (Default)**: Equity options in the US can be exercised early. For options selling strategies (such as Cash-Secured Puts and Covered Calls), using the American Binomial model (`--greeks-model binomial`, default) accounts for early exercise boundaries and discrete dividends. If you prefer classic European Black-Scholes pricing without dividend modeling, pass `--greeks-model bs`.
+> **📈 Black-Scholes Greeks Model (Default)**: Consistent with the complete 11-year historical database (2016–2026), daily incremental updates default to the industry-standard Black-Scholes model (`--greeks-model bs`, SOFR benchmark rate, NBBO midpoints). If you need American-style early-exercise modeling for discrete dividends, pass `--greeks-model binomial`.
 
 ### 5. Interactive Options & Greeks Visualization App (`options-viewer`)
 

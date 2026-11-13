@@ -144,7 +144,7 @@ class DownloadConfig:
     start_date: datetime.date = field(default_factory=lambda: datetime.date(2016, 1, 1))
     end_date: datetime.date = field(default_factory=nyse_today)
     data_dir: Path = field(default_factory=lambda: Path("data"))
-    greeks_model: GreeksModel = "binomial"
+    greeks_model: GreeksModel = "bs"
     include_open_interest: bool = True
     include_underlying_eod: bool = True
     fallback_eod_if_no_greeks: bool = True
@@ -153,8 +153,8 @@ class DownloadConfig:
     annual_dividend_amount: float | None = None
     option_use_nbbo: bool = True
     underlyer_use_nbbo: bool = False
-    max_dte: int | None = None
-    strike_range: int | None = None
+    max_dte: int | None = 150
+    strike_range: int | None = 50
     binomial_steps: int = 101
     max_workers: int = 4
     skip_existing: bool = True

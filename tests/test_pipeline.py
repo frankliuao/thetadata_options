@@ -838,6 +838,48 @@ class MockCliTests(unittest.TestCase):
             self.assertEqual(res.height, 2)
             self.assertEqual(res["trade_date"].to_list(), [datetime.date(2024, 12, 30), datetime.date(2025, 1, 6)])
 
+    def test_default_configurations_match_production_download_settings(self) -> None:
+        """Ensure all default settings in cli.py, updater.py, and downloader.py match production parameters."""
+        from options_data.cli import build_parser as build_cli_parser
+        from options_data.updater import build_parser as build_updater_parser
+        from options_data.downloader import DownloadConfig
+
+        # 1. Check download-options CLI defaults
+        cli_args = build_cli_parser().parse_args([])
+        self.assertEqual(cli_args.greeks_model, "bs")
+        self.assertEqual(cli_args.strike_range, 50)
+        self.assertEqual(cli_args.max_dte, 150)
+        self.assertEqual(cli_args.universe, "active")
+        self.assertEqual(cli_args.rate_type, "sofr")
+        self.assertEqual(cli_args.start_date, datetime.date(2016, 1, 1))
+        self.assertEqual(cli_args.workers, 4)
+        self.assertFalse(cli_args.no_open_interest)
+        self.assertFalse(cli_args.no_underlying)
+
+        # 2. Check update-options CLI defaults
+        updater_args = build_updater_parser().parse_args([])
+        self.assertEqual(updater_args.greeks_model, "bs")
+        self.assertEqual(updater_args.strike_range, 50)
+        self.assertEqual(updater_args.max_dte, 150)
+        self.assertEqual(updater_args.workers, 4)
+        self.assertTrue(updater_args.include_open_interest)
+        self.assertFalse(updater_args.skip_underlying)
+
+        # 3. Check DownloadConfig class defaults
+        cfg = DownloadConfig(symbols=["SPY"])
+        self.assertEqual(cfg.greeks_model, "bs")
+        self.assertEqual(cfg.strike_range, 50)
+        self.assertEqual(cfg.max_dte, 150)
+        self.assertEqual(cfg.rate_type, "sofr")
+        self.assertEqual(cfg.start_date, datetime.date(2016, 1, 1))
+        self.assertTrue(cfg.include_open_interest)
+        self.assertTrue(cfg.include_underlying_eod)
+        self.assertTrue(cfg.option_use_nbbo)
+        self.assertEqual(cfg.max_workers, 4)
+        self.assertTrue(cfg.skip_existing)
+        self.assertTrue(cfg.consolidate_yearly)
+        self.assertTrue(cfg.sync_to_gdrive)
+
 
 if __name__ == "__main__":
     unittest.main()

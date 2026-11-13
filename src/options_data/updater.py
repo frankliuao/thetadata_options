@@ -326,9 +326,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--greeks-model",
-        choices=["binomial", "bs", "none"],
-        default="binomial",
-        help="Greeks model: 'binomial' (Cox-Ross-Rubinstein American style, recommended default for equity options/CSP/CC), 'bs' (Black-Scholes European style), or 'none'. Default: binomial",
+        choices=["bs", "binomial", "none"],
+        default="bs",
+        help="Greeks model: 'bs' (Black-Scholes European style, default), 'binomial' (Cox-Ross-Rubinstein American style), or 'none'. Default: bs",
     )
     parser.add_argument(
         "--annual-dividend",
