@@ -54,11 +54,14 @@ def export_universe_sheet_from_gdrive(
 
 
 def clean_and_save_universe_csv(
-    raw_csv_path: Path = DEFAULT_RAW_UNIVERSE_CSV,
-    clean_csv_path: Path = DEFAULT_UNIVERSE_CSV,
-    excluded_csv_path: Path = DEFAULT_EXCLUDED_CSV,
+    raw_csv_path: Path | str = DEFAULT_RAW_UNIVERSE_CSV,
+    clean_csv_path: Path | str = DEFAULT_UNIVERSE_CSV,
+    excluded_csv_path: Path | str = DEFAULT_EXCLUDED_CSV,
 ) -> pl.DataFrame:
     """Parse the raw exported Google Sheet CSV into clean active (575) and excluded (51) CSV files."""
+    raw_csv_path = Path(raw_csv_path)
+    clean_csv_path = Path(clean_csv_path)
+    excluded_csv_path = Path(excluded_csv_path)
     df = pl.read_csv(raw_csv_path, ignore_errors=True)
     df = df.rename(
         {
@@ -91,12 +94,12 @@ def clean_and_save_universe_csv(
 
 
 def load_universe_symbols(
-    csv_path: Path = DEFAULT_UNIVERSE_CSV,
+    csv_path: Path | str = DEFAULT_UNIVERSE_CSV,
     *,
     mode: UniverseFilter = "active",
     include_historical_tickers: bool = False,
     sheet_id: str | None = None,
-    excluded_csv_path: Path = DEFAULT_EXCLUDED_CSV,
+    excluded_csv_path: Path | str = DEFAULT_EXCLUDED_CSV,
 ) -> list[str]:
     """Load ticker symbols from the S&P 500 Universe CSV.
 
@@ -108,6 +111,8 @@ def load_universe_symbols(
       - `'all'`: All 575 active stocks + 51 excluded/delisted stocks
     - `include_historical_tickers`: If True, also includes pre-rename tickers (e.g. ADS, HFC, FBHS, GPS, WLTW).
     """
+    csv_path = Path(csv_path)
+    excluded_csv_path = Path(excluded_csv_path)
     if not csv_path.exists():
         if DEFAULT_RAW_UNIVERSE_CSV.exists():
             clean_and_save_universe_csv(
