@@ -8,7 +8,6 @@ import subprocess
 from pathlib import Path
 from typing import Any, Literal
 
-import openpyxl
 import polars as pl
 from dotenv import load_dotenv
 from rich.console import Console
@@ -51,7 +50,7 @@ def _cell_str(value: Any) -> str:
     return str(value).strip()
 
 
-def _read_xlsx_tab_rows(wb: openpyxl.Workbook, sheet_name: str) -> list[dict[str, str]]:
+def _read_xlsx_tab_rows(wb: Any, sheet_name: str) -> list[dict[str, str]]:
     """Read a worksheet into a list of header-keyed string dictionaries."""
     if sheet_name not in wb.sheetnames:
         raise ValueError(f"Expected worksheet {sheet_name!r} in workbook; found {wb.sheetnames}")
@@ -120,6 +119,14 @@ def clean_and_save_universe_xlsx(
     excluded_csv_path: Path | str = DEFAULT_EXCLUDED_CSV,
 ) -> pl.DataFrame:
     """Parse the 3-tab S&P 500 Excel workbook into normalized active, removed, and excluded CSVs."""
+    try:
+        import openpyxl
+    except ImportError:
+        raise ImportError(
+            "openpyxl is required to read .xlsx files. "
+            "Please install it or use the default bundled CSV."
+        )
+
     xlsx_path = Path(xlsx_path)
     clean_csv_path = Path(clean_csv_path)
     active_csv_path = Path(active_csv_path)
