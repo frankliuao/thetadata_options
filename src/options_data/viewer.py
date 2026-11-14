@@ -2116,6 +2116,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       lifecycleJumpToken++;
       chainLoadToken++;
       seriesLoadToken++;
+      smileLoadToken++;
       currentChainData = null;
       currentSeries = [];
       currentContractsMeta = null;
@@ -2317,6 +2318,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
         setStatus(`Loaded option chain for ${sym} on ${data.trade_date} (${exps.length} expirations, ${(data.strikes || []).length} strikes)`);
       } catch (e) {
+        if (thisToken !== chainLoadToken) return;
         setStatus(`Error loading chain: ${e.message}`);
       }
     }
@@ -2557,12 +2559,14 @@ INDEX_HTML = r"""<!DOCTYPE html>
         updateSymbolInputDisplay(symbol);
       }
 
-      // Determine trade year (the year when the contract was traded, not necessarily its expiration year)
-      const tradeYear = originTradeDate ? parseInt(originTradeDate.split('-')[0], 10) : parseInt(expiration.split('-')[0], 10);
+      // Set Year filter to All Years ('') so the full multi-year contract lifecycle is queried
       const yearSel = document.getElementById('sel-year');
-      if (tradeYear && [...yearSel.options].some(o => o.value === String(tradeYear))) {
-        yearSel.value = tradeYear;
+      if (![...yearSel.options].some(o => o.value === '')) {
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = 'All Years';
+        yearSel.appendChild(opt);
       }
+      yearSel.value = '';
 
       // Populate Expiration dropdown with target expiration
       const expSel = document.getElementById('sel-expiration');
@@ -2597,9 +2601,8 @@ INDEX_HTML = r"""<!DOCTYPE html>
       // Load timeseries directly for this specific contract
       await loadContractSeries();
 
-      // Hydrate sibling expirations and strikes in background if user hasn't jumped or changed selection
-      const qYear = tradeYear ? `&year=${tradeYear}` : '';
-      apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}${qYear}`).then(meta => {
+      // Hydrate sibling expirations and strikes across all years in background if user hasn't jumped or changed selection
+      apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}`).then(meta => {
         if (thisToken !== lifecycleJumpToken) return;
         if (document.getElementById('sel-symbol').value !== symbol) return;
         currentMeta = meta;
@@ -2618,7 +2621,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
         }
       }).catch(() => {});
 
-      apiGet(`/api/contracts?symbol=${encodeURIComponent(symbol)}&expiration=${encodeURIComponent(expiration)}${qYear}`).then(data => {
+      apiGet(`/api/contracts?symbol=${encodeURIComponent(symbol)}&expiration=${encodeURIComponent(expiration)}`).then(data => {
         if (thisToken !== lifecycleJumpToken) return;
         if (document.getElementById('sel-symbol').value !== symbol || expSel.value !== expiration) return;
         currentContractsMeta = data;
@@ -2773,12 +2776,17 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
       setStatus(`Querying ${sym} ${exp} $${strike} ${right.toUpperCase()}...`);
       const url = `/api/timeseries?symbol=${encodeURIComponent(sym)}&expiration=${encodeURIComponent(exp)}&strike=${encodeURIComponent(strike)}&right=${encodeURIComponent(right)}` + (yr ? `&year=${yr}` : '');
-      const data = await apiGet(url);
-      if (thisToken !== seriesLoadToken) return;
-      currentSeries = data.series || [];
-      renderLifecycleCharts(data);
-      renderTable(currentSeries);
-      setStatus(`Loaded ${currentSeries.length} trading days for ${sym} ${exp} $${strike} ${right.toUpperCase()}`);
+      try {
+        const data = await apiGet(url);
+        if (thisToken !== seriesLoadToken) return;
+        currentSeries = data.series || [];
+        renderLifecycleCharts(data);
+        renderTable(currentSeries);
+        setStatus(`Loaded ${currentSeries.length} trading days for ${sym} ${exp} $${strike} ${right.toUpperCase()}`);
+      } catch (e) {
+        if (thisToken !== seriesLoadToken) return;
+        setStatus(`Error querying contract series: ${e.message}`);
+      }
     }
 
     function renderLifecycleCharts(data) {
@@ -2944,7 +2952,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
     // =========================================================
     // TAB 3: IV SMILE & STRIKE CROSS-SECTION LOGIC
     // =========================================================
+    let smileLoadToken = 0;
     async function loadChainSmile() {
+      const thisToken = ++smileLoadToken;
       const sym = document.getElementById('sel-symbol').value;
       const td = document.getElementById('sel-tradedate').value;
       const exp = document.getElementById('sel-expiration').value;
@@ -2952,7 +2962,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
       setStatus(`Loading option chain cross-section for ${sym} on ${td}...`);
       const url = `/api/smile?symbol=${encodeURIComponent(sym)}&trade_date=${encodeURIComponent(td)}&expiration=${encodeURIComponent(exp)}`;
-      const data = await apiGet(url);
+      try {
+        const data = await apiGet(url);
+        if (thisToken !== smileLoadToken) return;
 
       const availExps = data.available_expirations || [];
       const expSel = document.getElementById('sel-expiration');
@@ -3056,6 +3068,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
       });
 
       setStatus(`Loaded ${chain.length} contracts for ${sym} on ${td}`);
+      } catch (e) {
+        if (thisToken !== smileLoadToken) return;
+        setStatus(`Error loading cross-section: ${e.message}`);
+      }
     }
 
     // =========================================================
