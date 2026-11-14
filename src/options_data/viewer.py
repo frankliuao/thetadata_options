@@ -468,19 +468,23 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
     .grid-charts {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 14px;
       padding: 0 20px 20px;
     }
     @media (max-width: 1100px) {
-      .grid-charts { grid-template-columns: 1fr; }
+      .grid-charts { grid-template-columns: minmax(0, 1fr); }
     }
     .chart-box {
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px;
+      padding: 0;
       min-height: 385px;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      box-sizing: border-box;
     }
     .chart-box.full-width {
       grid-column: 1 / -1;
@@ -559,6 +563,29 @@ INDEX_HTML = r"""<!DOCTYPE html>
       color: var(--text-main);
       font-family: monospace;
     }
+    .chart-zoom-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.90);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #f8fafc;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 25;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .chart-zoom-overlay.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -618,7 +645,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
   </div>
 
   <div class="tv-hint-bar">
-    <span>💡 <b>TradingView Interactivity</b>: Click &amp; drag chart body to <span class="shortcut">Pan</span> • Drag Y-axis vertically to <span class="shortcut">Stretch/Compress Price</span> • Drag X-axis horizontally to <span class="shortcut">Scale Timeline</span> • Scroll wheel to <span class="shortcut">Zoom (Cursor-Anchored)</span> • Double-click axis or chart to <span class="shortcut">Auto-fit</span></span>
+    <span>💡 <b>TradingView Interactivity</b>: Click &amp; drag chart body to <span class="shortcut">Pan</span> • Hold <span class="shortcut">Ctrl</span> / <span class="shortcut">⌘</span> + scroll to <span class="shortcut">Zoom (Smooth)</span> • Normal scroll navigates page • Drag axes to <span class="shortcut">Stretch/Compress</span> • Double-click to <span class="shortcut">Auto-fit</span></span>
   </div>
 
   <!-- KPI Summary Strip -->
@@ -705,7 +732,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       paper_bgcolor: '#111827',
       plot_bgcolor: '#111827',
       font: { color: '#e2e8f0', size: 11 },
-      margin: { l: 55, r: 50, t: 84, b: 40 },
+      margin: { l: 65, r: 65, t: 84, b: 45 },
       dragmode: 'pan',
       title: {
         x: 0.01,
@@ -763,9 +790,34 @@ INDEX_HTML = r"""<!DOCTYPE html>
       return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
 
+    function showZoomHint(gd) {
+      let toast = gd.querySelector('.chart-zoom-overlay');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'chart-zoom-overlay';
+        const isMac = (navigator.platform || '').toUpperCase().includes('MAC') || (navigator.userAgent || '').includes('Mac');
+        toast.textContent = `Hold ${isMac ? '⌘' : 'Ctrl'} + scroll to zoom chart`;
+        gd.appendChild(toast);
+      }
+      toast.classList.add('visible');
+      clearTimeout(gd._zoomHintTimeout);
+      gd._zoomHintTimeout = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 900);
+    }
+
     function attachTradingViewInteractions(gd) {
       if (!gd || gd._tv_attached) return;
       gd._tv_attached = true;
+
+      if (window.ResizeObserver && !gd._tv_ro) {
+        gd._tv_ro = new ResizeObserver(() => {
+          if (gd.offsetWidth > 0 && gd.offsetHeight > 0 && gd._fullLayout) {
+            Plotly.Plots.resize(gd);
+          }
+        });
+        gd._tv_ro.observe(gd);
+      }
 
       let dragCtx = null;
       let rafId = null;
@@ -780,9 +832,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const w = rect.width;
         const h = rect.height;
 
-        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
-        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
-        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
         const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
 
         const hasY2 = !!gd._fullLayout.yaxis2;
@@ -808,9 +860,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const w = rect.width;
         const h = rect.height;
 
-        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
-        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
-        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
         const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
 
         const hasY2 = !!gd._fullLayout.yaxis2;
@@ -927,6 +979,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
       gd.addEventListener('wheel', function(e) {
         if (!gd._fullLayout) return;
+
+        // If user is just scrolling the page without modifier, show hint and allow page scroll
+        if (!e.ctrlKey && !e.metaKey) {
+          showZoomHint(gd);
+          return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -936,9 +995,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const w = rect.width;
         const h = rect.height;
 
-        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
-        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
-        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
         const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
 
         const hasY2 = !!gd._fullLayout.yaxis2;
@@ -948,7 +1007,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
           targetAxis = 'yaxis';
         } else if (hasY2 && x >= w - mr - 5) {
           targetAxis = 'yaxis2';
-        } else if (e.ctrlKey || e.metaKey) {
+        } else if (e.shiftKey) {
           targetAxis = 'yaxis';
         }
 
@@ -972,7 +1031,16 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const curSpan = curMax - curMin;
         if (!curSpan || isNaN(curSpan)) return;
 
-        const factor = e.deltaY < 0 ? 0.88 : 1.14;
+        // Smooth continuous exponential scaling based on wheel delta (handles Shift+wheel delivering deltaX on macOS)
+        let rawDelta = e.deltaY;
+        if (Math.abs(rawDelta) < 0.001 && Math.abs(e.deltaX) > 0.001) {
+          rawDelta = e.deltaX;
+        }
+        let dy = rawDelta;
+        if (e.deltaMode === 1) dy *= 16;
+        else if (e.deltaMode === 2) dy *= 100;
+        dy = Math.max(-60, Math.min(60, dy));
+        const factor = Math.exp(dy * 0.0016);
 
         let anchor;
         if (targetAxis === 'xaxis') {
@@ -1018,9 +1086,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const w = rect.width;
         const h = rect.height;
 
-        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 55;
-        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 50;
-        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 40;
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
         const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
 
         const hasY2 = !!gd._fullLayout.yaxis2;
@@ -1570,6 +1638,17 @@ INDEX_HTML = r"""<!DOCTYPE html>
       document.getElementById('fld-right').classList.toggle('hidden', tab === 'smile');
       document.getElementById('fld-strike').classList.toggle('hidden', tab === 'smile');
       document.getElementById('fld-quick').classList.toggle('hidden', tab === 'smile');
+
+      requestAnimationFrame(() => {
+        const container = document.getElementById(tab === 'lifecycle' ? 'view-lifecycle' : (tab === 'smile' ? 'view-smile' : 'view-table'));
+        if (container) {
+          container.querySelectorAll('.chart-box').forEach(box => {
+            if (box._fullLayout) {
+              Plotly.Plots.resize(box);
+            }
+          });
+        }
+      });
 
       if (tab === 'smile') {
         loadChainSmile();
