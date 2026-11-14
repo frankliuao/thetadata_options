@@ -766,6 +766,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
     .tabs {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
       padding: 8px 20px 0;
       border-bottom: 1px solid var(--border);
@@ -780,6 +781,11 @@ INDEX_HTML = r"""<!DOCTYPE html>
       padding: 8px 14px;
       font-size: 12.5px;
       font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
     }
     .tab-btn:hover {
       color: var(--text-main);
@@ -1066,6 +1072,41 @@ INDEX_HTML = r"""<!DOCTYPE html>
     @media (max-width: 1100px) {
       .grid-charts { grid-template-columns: minmax(0, 1fr); }
     }
+    @media (max-width: 850px) {
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        padding: 8px 12px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .tab-btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 9px 6px;
+        font-size: 11.5px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        white-space: normal;
+        line-height: 1.25;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tab-btn.active {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+        border-bottom-width: 1px;
+      }
+      .tab-sub {
+        display: none;
+      }
+    }
     .chart-box {
       background: var(--bg-panel);
       border: 1px solid var(--border);
@@ -1312,10 +1353,22 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
   <!-- TOP NAVIGATION TABS -->
   <div class="tabs">
-    <button class="tab-btn active" id="tab-btn-chain" onclick="switchTab('chain')">📅 Daily Option Chain (Snapshot by Date)</button>
-    <button class="tab-btn" id="tab-btn-lifecycle" onclick="switchTab('lifecycle')">📈 Contract Lifecycle (Deep Dive Time Series)</button>
-    <button class="tab-btn" id="tab-btn-smile" onclick="switchTab('smile')">🌐 IV Smile & Strike Cross-Section</button>
-    <button class="tab-btn" id="tab-btn-table" onclick="switchTab('table')">📋 Raw Historical Data & CSV Export</button>
+    <button class="tab-btn active" id="tab-btn-chain" onclick="switchTab('chain')">
+      <span class="tab-title">📅 Daily Option Chain</span>
+      <span class="tab-sub"> (Snapshot by Date)</span>
+    </button>
+    <button class="tab-btn" id="tab-btn-lifecycle" onclick="switchTab('lifecycle')">
+      <span class="tab-title">📈 Contract Lifecycle</span>
+      <span class="tab-sub"> (Deep Dive Time Series)</span>
+    </button>
+    <button class="tab-btn" id="tab-btn-smile" onclick="switchTab('smile')">
+      <span class="tab-title">🌐 IV Smile & Skew</span>
+      <span class="tab-sub"> (Cross-Section)</span>
+    </button>
+    <button class="tab-btn" id="tab-btn-table" onclick="switchTab('table')">
+      <span class="tab-title">📋 Raw Historical Data</span>
+      <span class="tab-sub"> (& CSV Export)</span>
+    </button>
   </div>
 
   <!-- TOOLBAR -->
