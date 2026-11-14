@@ -120,7 +120,10 @@ class OptionsViewerBackend:
         """Return available years, expirations, trade dates, and summary stats for `symbol`."""
         sym = validate_symbol(symbol)
         years_filter = [year] if year is not None else None
-        lf = self.loader.scan_symbol(sym, years=years_filter)
+        try:
+            lf = self.loader.scan_symbol(sym, years=years_filter)
+        except FileNotFoundError:
+            lf = self.loader.scan_symbol(sym)
 
         all_local_files = self.loader.ensure_local_parquets(sym, years=years_filter)
         available_years = sorted(
@@ -170,7 +173,10 @@ class OptionsViewerBackend:
         sym = validate_symbol(symbol)
         exp_date = datetime.date.fromisoformat(expiration)
         years_filter = [year] if year is not None else None
-        lf = self.loader.scan_symbol(sym, years=years_filter).filter(pl.col("expiration") == exp_date)
+        try:
+            lf = self.loader.scan_symbol(sym, years=years_filter).filter(pl.col("expiration") == exp_date)
+        except FileNotFoundError:
+            lf = self.loader.scan_symbol(sym).filter(pl.col("expiration") == exp_date)
 
         agg_df = (
             lf.group_by(["strike", "right"])
@@ -225,9 +231,13 @@ class OptionsViewerBackend:
         exp_date = datetime.date.fromisoformat(expiration)
         right_clean = right.strip().lower()
         years_filter = [year] if year is not None else None
+        try:
+            lf_base = self.loader.scan_symbol(sym, years=years_filter)
+        except FileNotFoundError:
+            lf_base = self.loader.scan_symbol(sym)
 
         lf = (
-            self.loader.scan_symbol(sym, years=years_filter)
+            lf_base
             .filter(
                 (pl.col("expiration") == exp_date)
                 & ((pl.col("strike") - strike).abs() < 1e-4)
@@ -2103,6 +2113,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
       setStatus(`Scanning Parquet metadata for ${sym}...`);
 
       // Invalidate caches so inactive tabs fetch fresh data when switched to
+      lifecycleJumpToken++;
+      chainLoadToken++;
+      seriesLoadToken++;
       currentChainData = null;
       currentSeries = [];
       currentContractsMeta = null;
@@ -2227,7 +2240,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
     // =========================================================
     // TAB 1: DAILY OPTION CHAIN (SNAPSHOT BY DATE) LOGIC
     // =========================================================
+    let chainLoadToken = 0;
     async function loadOptionChain(requestedExp = null, targetStrike = null) {
+      const thisToken = ++chainLoadToken;
       const sym = document.getElementById('sel-symbol').value;
       const date = document.getElementById('sel-chain-date').value;
       if (!sym) return;
@@ -2239,6 +2254,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
       try {
         const data = await apiGet(url);
+        if (thisToken !== chainLoadToken) return;
         currentChainData = data;
 
         // Keep dropdown in sync
@@ -2513,7 +2529,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
     // =========================================================
     // BIDIRECTIONAL NAVIGATION & JUMP FUNCTIONS
     // =========================================================
+    let lifecycleJumpToken = 0;
+
     async function jumpToLifecycle(symbol, expiration, strike, right, originTradeDate) {
+      const thisToken = ++lifecycleJumpToken;
       originChainContext = {
         symbol: symbol,
         tradeDate: originTradeDate,
@@ -2538,11 +2557,11 @@ INDEX_HTML = r"""<!DOCTYPE html>
         updateSymbolInputDisplay(symbol);
       }
 
-      // Update Year filter
-      const expYear = parseInt(expiration.split('-')[0], 10);
+      // Determine trade year (the year when the contract was traded, not necessarily its expiration year)
+      const tradeYear = originTradeDate ? parseInt(originTradeDate.split('-')[0], 10) : parseInt(expiration.split('-')[0], 10);
       const yearSel = document.getElementById('sel-year');
-      if (yearSel.value !== String(expYear) && [...yearSel.options].some(o => o.value === String(expYear))) {
-        yearSel.value = expYear;
+      if (tradeYear && [...yearSel.options].some(o => o.value === String(tradeYear))) {
+        yearSel.value = tradeYear;
       }
 
       // Populate Expiration dropdown with target expiration
@@ -2578,8 +2597,11 @@ INDEX_HTML = r"""<!DOCTYPE html>
       // Load timeseries directly for this specific contract
       await loadContractSeries();
 
-      // Hydrate sibling expirations and strikes in background without overriding current selection
-      apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}&year=${expYear}`).then(meta => {
+      // Hydrate sibling expirations and strikes in background if user hasn't jumped or changed selection
+      const qYear = tradeYear ? `&year=${tradeYear}` : '';
+      apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}${qYear}`).then(meta => {
+        if (thisToken !== lifecycleJumpToken) return;
+        if (document.getElementById('sel-symbol').value !== symbol) return;
         currentMeta = meta;
         const curExp = expSel.value;
         expSel.innerHTML = '';
@@ -2596,7 +2618,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         }
       }).catch(() => {});
 
-      apiGet(`/api/contracts?symbol=${encodeURIComponent(symbol)}&expiration=${encodeURIComponent(expiration)}&year=${expYear}`).then(data => {
+      apiGet(`/api/contracts?symbol=${encodeURIComponent(symbol)}&expiration=${encodeURIComponent(expiration)}${qYear}`).then(data => {
+        if (thisToken !== lifecycleJumpToken) return;
+        if (document.getElementById('sel-symbol').value !== symbol || expSel.value !== expiration) return;
         currentContractsMeta = data;
         const curStrike = strikeSel.value;
         strikeSel.innerHTML = '';
@@ -2623,7 +2647,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const targetStrike = document.getElementById('sel-strike').value;
 
       document.getElementById('sel-chain-date').value = tradeDate;
-      switchTab('chain');
+      switchTab('chain', true);
       loadOptionChain(expiration, parseFloat(targetStrike));
     }
 
@@ -2634,7 +2658,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const strike = parseFloat(document.getElementById('sel-strike').value);
 
       document.getElementById('sel-chain-date').value = date;
-      switchTab('chain');
+      switchTab('chain', true);
       loadOptionChain(exp, strike);
     }
 
@@ -2662,6 +2686,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     // TAB 2: CONTRACT LIFECYCLE (TIME SERIES) LOGIC
     // =========================================================
     async function onYearChange(autoLoad = true) {
+      lifecycleJumpToken++;
       const sym = document.getElementById('sel-symbol').value;
       const yr = document.getElementById('sel-year').value;
       setStatus(`Loading expirations for ${sym} ${yr || 'All'}...`);
@@ -2690,6 +2715,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
 
     async function onExpirationChange(autoLoad = true) {
+      lifecycleJumpToken++;
       const sym = document.getElementById('sel-symbol').value;
       const yr = document.getElementById('sel-year').value;
       const exp = document.getElementById('sel-expiration').value;
@@ -2735,7 +2761,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
       loadContractSeries();
     }
 
+    let seriesLoadToken = 0;
     async function loadContractSeries() {
+      const thisToken = ++seriesLoadToken;
       const sym = document.getElementById('sel-symbol').value;
       const yr = document.getElementById('sel-year').value;
       const exp = document.getElementById('sel-expiration').value;
@@ -2746,6 +2774,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       setStatus(`Querying ${sym} ${exp} $${strike} ${right.toUpperCase()}...`);
       const url = `/api/timeseries?symbol=${encodeURIComponent(sym)}&expiration=${encodeURIComponent(exp)}&strike=${encodeURIComponent(strike)}&right=${encodeURIComponent(right)}` + (yr ? `&year=${yr}` : '');
       const data = await apiGet(url);
+      if (thisToken !== seriesLoadToken) return;
       currentSeries = data.series || [];
       renderLifecycleCharts(data);
       renderTable(currentSeries);
