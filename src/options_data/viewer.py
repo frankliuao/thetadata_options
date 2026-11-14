@@ -959,8 +959,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
     .chain-table th, .chain-table td {
       padding: 6px 8px;
       border-bottom: 1px solid #1e293b;
-      text-align: right;
       white-space: nowrap;
+    }
+    .chain-table td {
+      text-align: right;
+    }
+    .chain-table th {
+      text-align: center;
     }
     .chain-table thead tr:first-child th {
       background: #0f172a;
@@ -974,6 +979,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       background: var(--bg-card);
       font-size: 10.5px;
       color: var(--text-muted);
+      text-align: center;
       position: sticky;
       top: 0;
       z-index: 2;
@@ -1138,17 +1144,20 @@ INDEX_HTML = r"""<!DOCTYPE html>
     table th, table td {
       padding: 7px 10px;
       border-bottom: 1px solid #1e293b;
-      text-align: right;
       white-space: nowrap;
+    }
+    table td {
+      text-align: right;
     }
     table th {
       background: var(--bg-card);
       color: var(--text-muted);
       font-weight: 600;
+      text-align: center;
       position: sticky;
       top: 0;
     }
-    table th:first-child, table td:first-child { text-align: left; }
+    table td:first-child { text-align: left; }
     table tr:hover td { background: rgba(56, 189, 248, 0.05); }
 
     .status-bar {
