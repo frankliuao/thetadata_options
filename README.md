@@ -203,30 +203,29 @@ poetry run options-viewer --host 0.0.0.0 --port 8050
 python scripts/run_viewer.py --port 8050
 ```
 
-Navigate to **http://127.0.0.1:8050**:
+Navigate to **http://127.0.0.1:8050** to explore the interactive visualizer:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ThetaData Options & Greeks Interactive Dashboard                           │
-│  [ Symbol: Search AAPL / Apple... ▼ ] [ Date: ◀ 2026-09-15 ▶ ] [ ⚡ Latest ]  │
-│  [ Expiration: 2026-09-21 (6d) ▼ ] [ Strike Filter: ±25% Active ▼ ]         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Tabs: [ 📅 Daily Option Chain ] [ 📈 Contract Lifecycle ] [ 🌐 IV Smile ]   │
-│                                                                             │
-│  Dual Option Chain: Calls (Delta, IV, Bid/Ask, Mid) | Strike | Puts         │
-│  • Click any contract's [📈 View] to jump directly to Contract Lifecycle    │
-│  • From Contract Lifecycle, click [📅 View Chain] on any date to jump back │
-│                                                                             │
-│  💡 TradingView Interactivity:                                              │
-│     • Click & drag chart body to Pan                                        │
-│     • Hold Ctrl / ⌘ + scroll to Zoom (Smooth)                               │
-│     • Normal scroll navigates page                                          │
-│     • Drag axes horizontally/vertically to Stretch/Compress                 │
-│     • Double-click to Auto-fit                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+#### 1. 📅 Daily Option Chain (Snapshot by Date)
+Inspect all available options across every strike and expiration for any trading day, featuring market KPIs, an expirations carousel with DTE badges, in-the-money highlighting, and dual-sided Calls/Puts with centered strikes and 1-click `[Call]` / `[Put]` deep-dive actions:
 
-#### Dashboard Features:
+![Daily Option Chain Snapshot](docs/images/daily_option_chain.png)
+
+#### 2. 📈 Contract Lifecycle View (Deep Dive Time Series)
+Track an option contract's entire multi-year lifecycle with synchronized TradingView-style charts (underlying spot vs. option Mid price & Bid/Ask envelope, 1st & 2nd order Greeks, IV, volume, and open interest):
+
+![Contract Lifecycle View](docs/images/contract_lifecycle.png)
+
+#### 3. 🌐 IV Smile, Skew & Open Interest Wall (Cross-Section)
+Inspect the cross-sectional implied volatility smile/skew, strike vs. Greek profiles, and the Call vs. Put Open Interest Wall for any expiration:
+
+![IV Smile & Greeks Cross-Section](docs/images/iv_smile.png)
+
+#### 4. 📋 Raw Historical Data & CSV Export
+Inspect point-in-time tabular records with 1-click **CSV Download** and per-row `📅 Chain` jumps:
+
+![Raw Historical Data Table](docs/images/raw_data_table.png)
+
+#### Dashboard Key Features:
 - **📅 Daily Option Chain (Snapshot by Date)**: Inspect all available options across every strike and expiration for any trading day:
   - **Market Snapshot KPIs**: Underlying spot price, ATM reference strike, total available expirations, total day option volume, open interest, and Put/Call volume/OI ratios.
   - **Expirations Carousel**: Quick-switch pills for all trading expirations with DTE badges (e.g. `1d`, `3d`, `6d`, `31d`, `120d`).
