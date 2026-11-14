@@ -1611,32 +1611,31 @@ INDEX_HTML = r"""<!DOCTYPE html>
       <table class="chain-table" id="chain-table">
         <thead>
           <tr>
-            <th colspan="7" class="th-calls">CALLS</th>
-            <th colspan="2" class="th-strike" id="th-strike-title">STRIKE & SPOT</th>
-            <th colspan="7" class="th-puts">PUTS</th>
+            <th colspan="6" class="th-calls">CALLS</th>
+            <th colspan="3" class="th-strike" id="th-strike-title">STRIKE & SPOT</th>
+            <th colspan="6" class="th-puts">PUTS</th>
           </tr>
           <tr>
-            <!-- Calls Subheaders -->
-            <th title="Click to view lifecycle">Analyze</th>
+            <!-- Calls Subheaders (6 cols) -->
             <th>Delta</th>
             <th>IV (%)</th>
             <th>Bid / Ask</th>
             <th style="color:var(--accent)">Mid ($)</th>
             <th>Volume</th>
-            <th>Open Int</th>
+            <th style="border-right:1px solid #334155;">Open Int</th>
 
-            <!-- Strike Subheaders -->
+            <!-- Strike Subheaders (3 cols) -->
             <th style="background:#182234; color:var(--accent)">Strike</th>
             <th style="background:#182234">% vs Spot</th>
+            <th style="background:#182234; border-right:1px solid #334155;" title="Click to view contract lifecycle timeseries">Analyze</th>
 
-            <!-- Puts Subheaders -->
+            <!-- Puts Subheaders (6 cols) -->
             <th style="color:var(--accent)">Mid ($)</th>
             <th>Bid / Ask</th>
             <th>IV (%)</th>
             <th>Delta</th>
             <th>Volume</th>
             <th>Open Int</th>
-            <th title="Click to view lifecycle">Analyze</th>
           </tr>
         </thead>
         <tbody id="chain-table-body">
@@ -2923,13 +2922,14 @@ INDEX_HTML = r"""<!DOCTYPE html>
           ? (row.moneyness_pct >= 0 ? `+${row.moneyness_pct}%` : `${row.moneyness_pct}%`) 
           : '--';
 
+        const callBtn = c ? `<button class="btn-action-view" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" title="Analyze ${sym} ${exp} $${st} CALL Lifecycle">Call</button>` : '';
+        const putBtn = p ? `<button class="btn-action-view" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" title="Analyze ${sym} ${exp} $${st} PUT Lifecycle">Put</button>` : '';
+        const actionHtml = (callBtn || putBtn) 
+          ? `<div style="display:inline-flex; gap:3px; align-items:center; justify-content:center;">${callBtn}${putBtn}</div>` 
+          : '--';
+
         tr.innerHTML = `
-          <!-- CALLS SIDE -->
-          <td style="text-align:center;">
-            <button class="btn-action-view" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" title="Analyze ${sym} ${exp} $${st} CALL Lifecycle">
-              📈 View
-            </button>
-          </td>
+          <!-- CALLS SIDE (6 cols) -->
           <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" style="color:var(--accent); font-weight:500;">
             ${c ? fmt(c.delta, 2) : '--'}
           </td>
@@ -2949,15 +2949,18 @@ INDEX_HTML = r"""<!DOCTYPE html>
             ${c ? fmtVol(c.open_interest) : '-'}
           </td>
 
-          <!-- CENTER STRIKE -->
+          <!-- CENTER STRIKE & ACTION (3 cols) -->
           <td class="td-strike ${isATM ? 'strike-atm' : ''}">
             ${st}${isATM ? '<span class="atm-badge">ATM</span>' : ''}
           </td>
-          <td style="background:#141e30; color:var(--text-muted); font-size:10.5px; text-align:center; border-right:1px solid #334155;">
+          <td style="background:#141e30; color:var(--text-muted); font-size:10.5px; text-align:center;">
             ${moneynessText}
           </td>
+          <td style="background:#141e30; text-align:center; white-space:nowrap; border-right:1px solid #334155;">
+            ${actionHtml}
+          </td>
 
-          <!-- PUTS SIDE -->
+          <!-- PUTS SIDE (6 cols) -->
           <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" style="color:#fff; font-weight:700;">
             ${p ? `$${fmt(p.mid ?? p.close)}` : '--'}
           </td>
@@ -2975,11 +2978,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
           </td>
           <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')">
             ${p ? fmtVol(p.open_interest) : '-'}
-          </td>
-          <td style="text-align:center;">
-            <button class="btn-action-view" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" title="Analyze ${sym} ${exp} $${st} PUT Lifecycle">
-              📈 View
-            </button>
           </td>
         `;
 
