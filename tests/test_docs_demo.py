@@ -18,7 +18,8 @@ class DocsDemoTests(unittest.TestCase):
         self.assertIn("DEMO MODE", html)
         self.assertIn("Plotly", html)
         self.assertIn("mockApiGet", html)
-        self.assertIn('type="date"', html)
+        self.assertIn("trading-date-picker", html)
+        self.assertIn("cal-day-cell", html)
 
     def test_symbols_json_registry(self) -> None:
         symbols_file = SAMPLE_DATA_DIR / "symbols.json"

@@ -95,20 +95,171 @@
       min-width: 110px;
       outline: none;
     }
-    input[type="date"] {
-      color-scheme: dark;
+    /* Trading Calendar Date Picker with Invalid Date Exclusion */
+    .trading-date-picker {
+      position: relative;
+      display: inline-block;
+    }
+    .date-input-box {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
       cursor: pointer;
-      font-family: inherit;
+      user-select: none;
       min-width: 135px;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    input[type="date"]::-webkit-calendar-picker-indicator {
+    .date-input-box:hover {
+      border-color: var(--accent);
+    }
+    .trading-date-picker.open .date-input-box {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .date-calendar-icon {
+      color: var(--accent);
+      font-size: 13px;
+    }
+    .date-display-text {
+      font-family: monospace;
+      letter-spacing: 0.03em;
+    }
+    .trading-calendar-popover {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75);
+      padding: 12px;
+      width: 255px;
+      z-index: 9999;
+      display: none;
+      user-select: none;
+    }
+    .trading-date-picker.open .trading-calendar-popover {
+      display: block;
+    }
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cal-nav-btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
       cursor: pointer;
-      filter: invert(0.8) sepia(1) saturate(5) hue-rotate(175deg);
-      opacity: 0.85;
-      transition: opacity 0.15s;
     }
-    input[type="date"]::-webkit-calendar-picker-indicator:hover {
-      opacity: 1;
+    .cal-nav-btn:hover {
+      background: var(--accent);
+      color: #020617;
+    }
+    .cal-title {
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--text-main);
+    }
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .cal-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-day-cell {
+      height: 27px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .cal-day-cell.empty {
+      background: transparent;
+    }
+    .cal-day-cell.disabled {
+      color: #475569;
+      background: rgba(255, 255, 255, 0.015);
+      cursor: not-allowed;
+      opacity: 0.35;
+      text-decoration: line-through;
+      pointer-events: none;
+    }
+    .cal-day-cell.trading-day {
+      color: #f8fafc;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.1s ease;
+    }
+    .cal-day-cell.trading-day:hover {
+      background: var(--accent);
+      color: #020617;
+      border-color: var(--accent);
+      transform: scale(1.05);
+    }
+    .cal-day-cell.trading-day.selected {
+      background: #22c55e;
+      color: #020617;
+      border-color: #22c55e;
+      font-weight: 700;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+    }
+    .cal-footer {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+    }
+    .cal-legend {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-muted);
+    }
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      display: inline-block;
+    }
+    .cal-jump-latest {
+      color: var(--accent);
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cal-jump-latest:hover {
+      text-decoration: underline;
     }
     select:focus, input:focus {
       border-color: var(--accent);
@@ -815,7 +966,32 @@
       <label>Snapshot Trade Date</label>
       <div style="display:flex; gap:4px; align-items:center;">
         <button class="secondary" onclick="stepTradeDate(-1)" title="Previous Trading Day">◀</button>
-        <input type="date" id="sel-chain-date" onclick="this.showPicker && this.showPicker()" onchange="onChainDateChange()" />
+        <div class="trading-date-picker" id="picker-chain-date">
+          <div class="date-input-box" onclick="toggleTradingCalendar('chain', event)" title="Open trading day calendar">
+            <span class="date-calendar-icon">📅</span>
+            <span class="date-display-text" id="display-chain-date">--</span>
+            <span style="font-size:9px; color:var(--text-muted); margin-left:auto;">▼</span>
+          </div>
+          <input type="hidden" id="sel-chain-date" onchange="onChainDateChange()" />
+          <div class="trading-calendar-popover" id="popover-chain-date" onclick="event.stopPropagation()">
+            <div class="cal-header">
+              <button type="button" class="cal-nav-btn" onclick="calNavigateMonth('chain', -1)">◀</button>
+              <span class="cal-title" id="cal-title-chain">--</span>
+              <button type="button" class="cal-nav-btn" onclick="calNavigateMonth('chain', 1)">▶</button>
+            </div>
+            <div class="cal-weekdays">
+              <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div class="cal-days-grid" id="cal-days-chain"></div>
+            <div class="cal-footer">
+              <div class="cal-legend">
+                <span class="legend-dot"></span>
+                <span>Trading Day</span>
+              </div>
+              <button type="button" class="cal-jump-latest" onclick="calJumpToLatest('chain')">Latest ⚡</button>
+            </div>
+          </div>
+        </div>
         <button class="secondary" onclick="stepTradeDate(1)" title="Next Trading Day">▶</button>
         <button class="secondary" onclick="jumpToLatestDate()" title="Jump to Latest Session">⚡ Latest</button>
       </div>
@@ -872,8 +1048,33 @@
     <!-- JUMP TO CHAIN ON DATE (Visible on Lifecycle Tab) -->
     <div class="field hidden" id="fld-jump-chain">
       <label>Cross-Section at Date</label>
-      <div style="display:flex; gap:4px;">
-        <input type="date" id="sel-contract-date" onclick="this.showPicker && this.showPicker()" />
+      <div style="display:flex; gap:4px; align-items:center;">
+        <div class="trading-date-picker" id="picker-contract-date">
+          <div class="date-input-box" onclick="toggleTradingCalendar('contract', event)" title="Open trading day calendar">
+            <span class="date-calendar-icon">📅</span>
+            <span class="date-display-text" id="display-contract-date">--</span>
+            <span style="font-size:9px; color:var(--text-muted); margin-left:auto;">▼</span>
+          </div>
+          <input type="hidden" id="sel-contract-date" />
+          <div class="trading-calendar-popover" id="popover-contract-date" onclick="event.stopPropagation()">
+            <div class="cal-header">
+              <button type="button" class="cal-nav-btn" onclick="calNavigateMonth('contract', -1)">◀</button>
+              <span class="cal-title" id="cal-title-contract">--</span>
+              <button type="button" class="cal-nav-btn" onclick="calNavigateMonth('contract', 1)">▶</button>
+            </div>
+            <div class="cal-weekdays">
+              <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div class="cal-days-grid" id="cal-days-contract"></div>
+            <div class="cal-footer">
+              <div class="cal-legend">
+                <span class="legend-dot"></span>
+                <span>Trading Day</span>
+              </div>
+              <button type="button" class="cal-jump-latest" onclick="calJumpToLatest('contract')">Latest ⚡</button>
+            </div>
+          </div>
+        </div>
         <button class="secondary" onclick="jumpFromContractToChain()" title="Inspect the full option chain across all strikes on this date">📅 View Day Chain</button>
       </div>
     </div>
@@ -881,7 +1082,32 @@
     <!-- CONTROLS FOR TAB 3: SMILE -->
     <div class="field hidden" id="fld-tradedate">
       <label>Trade Date (Snapshot)</label>
-      <input type="date" id="sel-tradedate" onclick="this.showPicker && this.showPicker()" onchange="loadChainSmile()" />
+      <div class="trading-date-picker" id="picker-tradedate">
+        <div class="date-input-box" onclick="toggleTradingCalendar('smile', event)" title="Open trading day calendar">
+          <span class="date-calendar-icon">📅</span>
+          <span class="date-display-text" id="display-tradedate">--</span>
+          <span style="font-size:9px; color:var(--text-muted); margin-left:auto;">▼</span>
+        </div>
+        <input type="hidden" id="sel-tradedate" onchange="loadChainSmile()" />
+        <div class="trading-calendar-popover" id="popover-tradedate" onclick="event.stopPropagation()">
+          <div class="cal-header">
+            <button type="button" class="cal-nav-btn" onclick="calNavigateMonth('smile', -1)">◀</button>
+            <span class="cal-title" id="cal-title-smile">--</span>
+            <button type="button" class="cal-nav-btn" onclick="calNavigateMonth('smile', 1)">▶</button>
+          </div>
+          <div class="cal-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-days-grid" id="cal-days-smile"></div>
+          <div class="cal-footer">
+            <div class="cal-legend">
+              <span class="legend-dot"></span>
+              <span>Trading Day</span>
+            </div>
+            <button type="button" class="cal-jump-latest" onclick="calJumpToLatest('smile')">Latest ⚡</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2025,6 +2251,170 @@
       await onSymbolChange();
     }
 
+    /* ================= TRADING CALENDAR CONTROLLER ================= */
+    const calState = {
+      chain: { year: 2026, month: 1 },
+      contract: { year: 2026, month: 1 },
+      smile: { year: 2026, month: 1 }
+    };
+
+    const MONTH_NAMES = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    function getTradingDateInputId(type) {
+      return type === 'chain' ? 'sel-chain-date' : (type === 'contract' ? 'sel-contract-date' : 'sel-tradedate');
+    }
+
+    function getTradingDateDisplayId(type) {
+      return type === 'chain' ? 'display-chain-date' : (type === 'contract' ? 'display-contract-date' : 'display-tradedate');
+    }
+
+    function getTradingDateContainerId(type) {
+      return type === 'chain' ? 'picker-chain-date' : (type === 'contract' ? 'picker-contract-date' : 'picker-tradedate');
+    }
+
+    function setTradingDateValue(type, dateStr, triggerChange = false) {
+      const input = document.getElementById(getTradingDateInputId(type));
+      const display = document.getElementById(getTradingDateDisplayId(type));
+      if (input) input.value = dateStr || '';
+      if (display) display.textContent = dateStr || '--';
+
+      if (dateStr && calState[type]) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          calState[type].year = parseInt(parts[0], 10);
+          calState[type].month = parseInt(parts[1], 10) - 1;
+        }
+      }
+      renderTradingCalendarMonth(type);
+
+      if (triggerChange) {
+        if (type === 'chain') {
+          onChainDateChange();
+        } else if (type === 'smile') {
+          loadChainSmile();
+        }
+      }
+    }
+
+    function toggleTradingCalendar(type, event) {
+      if (event) event.stopPropagation();
+      const container = document.getElementById(getTradingDateContainerId(type));
+      if (!container) return;
+      const willOpen = !container.classList.contains('open');
+
+      // Close any other open calendars first
+      closeAllTradingCalendars();
+
+      if (willOpen) {
+        const input = document.getElementById(getTradingDateInputId(type));
+        if (input && input.value) {
+          const parts = input.value.split('-');
+          if (parts.length === 3) {
+            calState[type].year = parseInt(parts[0], 10);
+            calState[type].month = parseInt(parts[1], 10) - 1;
+          }
+        }
+        renderTradingCalendarMonth(type);
+        container.classList.add('open');
+      }
+    }
+
+    function closeTradingCalendar(type) {
+      const container = document.getElementById(getTradingDateContainerId(type));
+      if (container) container.classList.remove('open');
+    }
+
+    function closeAllTradingCalendars() {
+      ['chain', 'contract', 'smile'].forEach(t => closeTradingCalendar(t));
+    }
+
+    // Global click listener to close popover when clicking anywhere outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.trading-date-picker')) {
+        closeAllTradingCalendars();
+      }
+    });
+
+    function calNavigateMonth(type, delta) {
+      calState[type].month += delta;
+      if (calState[type].month < 0) {
+        calState[type].month = 11;
+        calState[type].year -= 1;
+      } else if (calState[type].month > 11) {
+        calState[type].month = 0;
+        calState[type].year += 1;
+      }
+      renderTradingCalendarMonth(type);
+    }
+
+    function selectTradingCalendarDate(type, dateStr) {
+      setTradingDateValue(type, dateStr, true);
+      closeTradingCalendar(type);
+    }
+
+    function calJumpToLatest(type) {
+      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      if (dates.length > 0) {
+        const latest = dates[dates.length - 1];
+        selectTradingCalendarDate(type, latest);
+      }
+    }
+
+    function renderTradingCalendarMonth(type) {
+      const titleEl = document.getElementById(`cal-title-${type}`);
+      const gridEl = document.getElementById(`cal-days-${type}`);
+      if (!titleEl || !gridEl) return;
+
+      const { year, month } = calState[type];
+      titleEl.textContent = `${MONTH_NAMES[month]} ${year}`;
+      gridEl.innerHTML = '';
+
+      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const validDates = new Set(dates);
+      const input = document.getElementById(getTradingDateInputId(type));
+      const curSelected = input ? input.value : '';
+
+      const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday
+      const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // Empty leading slots before 1st day of month
+      for (let i = 0; i < firstDayIndex; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'cal-day-cell empty';
+        gridEl.appendChild(emptyCell);
+      }
+
+      // Day slots
+      for (let day = 1; day <= totalDaysInMonth; day++) {
+        const dayStr = String(day).padStart(2, '0');
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+        const cell = document.createElement('div');
+        const isTradingDay = validDates.has(dateStr);
+        const isSelected = (dateStr === curSelected);
+
+        if (isTradingDay) {
+          cell.className = `cal-day-cell trading-day ${isSelected ? 'selected' : ''}`;
+          cell.textContent = day;
+          cell.title = `Valid Trading Day: ${dateStr}`;
+          cell.onclick = (e) => {
+            e.stopPropagation();
+            selectTradingCalendarDate(type, dateStr);
+          };
+        } else {
+          // Weekend, NYSE market holiday, or date without market data - EXCLUDED / CANNOT BE SELECTED
+          cell.className = 'cal-day-cell disabled';
+          cell.textContent = day;
+          cell.title = `Non-trading day / Closed market: ${dateStr}`;
+        }
+        gridEl.appendChild(cell);
+      }
+    }
+
     async function onSymbolChange() {
       const sym = document.getElementById('sel-symbol').value;
       if (!sym) return;
@@ -2050,29 +2440,11 @@
 
         // Configure Calendar Trade Date Pickers
         const dates = allTradeDates;
-        const minDate = dates.length > 0 ? dates[0] : '';
         const maxDate = dates.length > 0 ? dates[dates.length - 1] : '';
 
-        const chainDateInput = document.getElementById('sel-chain-date');
-        if (chainDateInput) {
-          chainDateInput.min = minDate;
-          chainDateInput.max = maxDate;
-          if (maxDate) chainDateInput.value = maxDate;
-        }
-
-        const contractDateInput = document.getElementById('sel-contract-date');
-        if (contractDateInput) {
-          contractDateInput.min = minDate;
-          contractDateInput.max = maxDate;
-          if (maxDate) contractDateInput.value = maxDate;
-        }
-
-        const smileDateInput = document.getElementById('sel-tradedate');
-        if (smileDateInput) {
-          smileDateInput.min = minDate;
-          smileDateInput.max = maxDate;
-          if (maxDate) smileDateInput.value = maxDate;
-        }
+        setTradingDateValue('chain', maxDate, false);
+        setTradingDateValue('contract', maxDate, false);
+        setTradingDateValue('smile', maxDate, false);
 
         // Populate Years dropdown
         const yearSel = document.getElementById('sel-year');
@@ -2181,7 +2553,7 @@
 
         // Keep dropdown in sync
         if (data.trade_date) {
-          document.getElementById('sel-chain-date').value = data.trade_date;
+          setTradingDateValue('chain', data.trade_date, false);
           document.getElementById('chain-exp-date-label').textContent = data.trade_date;
         }
         document.getElementById('chain-exp-sym-label').textContent = sym;
@@ -2291,7 +2663,7 @@
       const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
       if (!dates.length) return;
 
-      // If user selected a weekend/holiday on the calendar, snap to closest available trading session
+      // If user selected a non-trading date, snap to closest available trading session
       if (!dates.includes(val)) {
         let closest = dates[0];
         let minDiff = Math.abs(new Date(val) - new Date(closest));
@@ -2302,8 +2674,10 @@
             closest = d;
           }
         }
-        input.value = closest;
+        setTradingDateValue('chain', closest, false);
         setStatus(`📅 Snapped to nearest trading session: ${closest}`);
+      } else {
+        setTradingDateValue('chain', val, false);
       }
       loadOptionChain();
     }
@@ -2320,15 +2694,14 @@
       }
       // Note: direction -1 means previous trading day, +1 means next trading day
       const targetIdx = Math.max(0, Math.min(dates.length - 1, idx + direction));
-      input.value = dates[targetIdx];
+      setTradingDateValue('chain', dates[targetIdx], false);
       loadOptionChain();
     }
 
     function jumpToLatestDate() {
-      const input = document.getElementById('sel-chain-date');
       const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
       if (dates.length > 0) {
-        input.value = dates[dates.length - 1];
+        setTradingDateValue('chain', dates[dates.length - 1], false);
         loadOptionChain();
       }
     }
@@ -2540,7 +2913,7 @@
       // Sync Contract Date dropdown
       const contractDateSel = document.getElementById('sel-contract-date');
       if (contractDateSel && originTradeDate) {
-        contractDateSel.value = originTradeDate;
+        setTradingDateValue('contract', originTradeDate, false);
       }
 
       // Load timeseries directly for this specific contract
@@ -2594,7 +2967,7 @@
       const { symbol, tradeDate, expiration } = originChainContext;
       const targetStrike = document.getElementById('sel-strike').value;
 
-      document.getElementById('sel-chain-date').value = tradeDate;
+      setTradingDateValue('chain', tradeDate, false);
       switchTab('chain', true);
       loadOptionChain(expiration, parseFloat(targetStrike));
     }
@@ -2605,7 +2978,7 @@
       const exp = document.getElementById('sel-expiration').value;
       const strike = parseFloat(document.getElementById('sel-strike').value);
 
-      document.getElementById('sel-chain-date').value = date;
+      setTradingDateValue('chain', date, false);
       switchTab('chain', true);
       loadOptionChain(exp, strike);
     }
@@ -2918,7 +3291,7 @@
           }
         }
         td = closest;
-        tdInput.value = closest;
+        setTradingDateValue('smile', closest, false);
       }
 
       setStatus(`Loading option chain cross-section for ${sym} on ${td}...`);
