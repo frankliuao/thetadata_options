@@ -393,19 +393,47 @@ class OptionsViewerBackend:
 
             strikes_list = [strikes_map[st] for st in sorted_strikes]
 
-            c_vol = sum((r["call"].get("volume") or 0) for r in strikes_list if r["call"])
-            p_vol = sum((r["put"].get("volume") or 0) for r in strikes_list if r["put"])
-            c_oi = sum((r["call"].get("open_interest") or 0) for r in strikes_list if r["call"])
-            p_oi = sum((r["put"].get("open_interest") or 0) for r in strikes_list if r["put"])
+            # Day-wide session totals across all expirations on this trade date
+            session_c_vol = sum((r.get("calls_volume") or 0) for r in exp_records)
+            session_p_vol = sum((r.get("puts_volume") or 0) for r in exp_records)
+            session_tot_vol = session_c_vol + session_p_vol
+            session_c_oi = sum((r.get("calls_oi") or 0) for r in exp_records)
+            session_p_oi = sum((r.get("puts_oi") or 0) for r in exp_records)
+            session_tot_oi = session_c_oi + session_p_oi
+            session_pc_vol = round(session_p_vol / session_c_vol, 3) if session_c_vol > 0 else None
+            session_pc_oi = round(session_p_oi / session_c_oi, 3) if session_c_oi > 0 else None
+
+            # Active expiration totals
+            exp_c_vol = sum((r["call"].get("volume") or 0) for r in strikes_list if r["call"])
+            exp_p_vol = sum((r["put"].get("volume") or 0) for r in strikes_list if r["put"])
+            exp_tot_vol = exp_c_vol + exp_p_vol
+            exp_c_oi = sum((r["call"].get("open_interest") or 0) for r in strikes_list if r["call"])
+            exp_p_oi = sum((r["put"].get("open_interest") or 0) for r in strikes_list if r["put"])
+            exp_tot_oi = exp_c_oi + exp_p_oi
+
             totals = {
-                "call_volume": c_vol,
-                "put_volume": p_vol,
-                "total_volume": c_vol + p_vol,
-                "call_oi": c_oi,
-                "put_oi": p_oi,
-                "total_oi": c_oi + p_oi,
-                "put_call_volume_ratio": round(p_vol / c_vol, 3) if c_vol > 0 else None,
-                "put_call_oi_ratio": round(p_oi / c_oi, 3) if c_oi > 0 else None,
+                "session_call_volume": session_c_vol,
+                "session_put_volume": session_p_vol,
+                "session_total_volume": session_tot_vol,
+                "session_call_oi": session_c_oi,
+                "session_put_oi": session_p_oi,
+                "session_total_oi": session_tot_oi,
+                "session_put_call_volume_ratio": session_pc_vol,
+                "session_put_call_oi_ratio": session_pc_oi,
+                "call_volume": session_c_vol,
+                "put_volume": session_p_vol,
+                "total_volume": session_tot_vol,
+                "call_oi": session_c_oi,
+                "put_oi": session_p_oi,
+                "total_oi": session_tot_oi,
+                "put_call_volume_ratio": session_pc_vol,
+                "put_call_oi_ratio": session_pc_oi,
+                "active_exp_call_volume": exp_c_vol,
+                "active_exp_put_volume": exp_p_vol,
+                "active_exp_total_volume": exp_tot_vol,
+                "active_exp_call_oi": exp_c_oi,
+                "active_exp_put_oi": exp_p_oi,
+                "active_exp_total_oi": exp_tot_oi,
             }
 
         return {
@@ -2074,6 +2102,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
       updateSymbolInputDisplay(sym);
       setStatus(`Scanning Parquet metadata for ${sym}...`);
 
+      // Invalidate caches so inactive tabs fetch fresh data when switched to
+      currentChainData = null;
+      currentSeries = [];
+      currentContractsMeta = null;
+      originChainContext = null;
+      closeBanner();
+
       try {
         const meta = await apiGet(`/api/metadata?symbol=${encodeURIComponent(sym)}`);
         currentMeta = meta;
@@ -2131,7 +2166,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       }
     }
 
-    function switchTab(tab) {
+    function switchTab(tab, skipAutoLoad = false) {
       currentTab = tab;
 
       // Update Tab Buttons
@@ -2178,12 +2213,14 @@ INDEX_HTML = r"""<!DOCTYPE html>
         }
       });
 
-      if (tab === 'chain') {
-        if (!currentChainData) loadOptionChain();
-      } else if (tab === 'lifecycle' || tab === 'table') {
-        if (!currentSeries.length) onYearChange();
-      } else if (tab === 'smile') {
-        loadChainSmile();
+      if (!skipAutoLoad) {
+        if (tab === 'chain') {
+          if (!currentChainData) loadOptionChain();
+        } else if (tab === 'lifecycle' || tab === 'table') {
+          if (!currentSeries.length) onYearChange();
+        } else if (tab === 'smile') {
+          loadChainSmile();
+        }
       }
     }
 
@@ -2236,14 +2273,24 @@ INDEX_HTML = r"""<!DOCTYPE html>
         document.getElementById('chain-kpi-atm').textContent = atmRow ? `ATM Strike: $${atmRow.strike}` : 'ATM Strike: --';
 
         const totals = data.totals || {};
-        document.getElementById('chain-kpi-vol').textContent = (totals.total_volume || 0).toLocaleString();
-        document.getElementById('chain-kpi-pc-vol').textContent = totals.put_call_volume_ratio != null
-          ? `P/C Vol: ${totals.put_call_volume_ratio.toFixed(2)} (Calls: ${(totals.call_volume || 0).toLocaleString()} • Puts: ${(totals.put_volume || 0).toLocaleString()})`
+        const sessionTotVol = totals.session_total_volume ?? totals.total_volume ?? 0;
+        const sessionCallVol = totals.session_call_volume ?? totals.call_volume ?? 0;
+        const sessionPutVol = totals.session_put_volume ?? totals.put_volume ?? 0;
+        const pcVol = totals.session_put_call_volume_ratio ?? totals.put_call_volume_ratio;
+
+        const sessionTotOI = totals.session_total_oi ?? totals.total_oi ?? 0;
+        const sessionCallOI = totals.session_call_oi ?? totals.call_oi ?? 0;
+        const sessionPutOI = totals.session_put_oi ?? totals.put_oi ?? 0;
+        const pcOI = totals.session_put_call_oi_ratio ?? totals.put_call_oi_ratio;
+
+        document.getElementById('chain-kpi-vol').textContent = sessionTotVol.toLocaleString();
+        document.getElementById('chain-kpi-pc-vol').textContent = pcVol != null
+          ? `P/C Vol: ${pcVol.toFixed(2)} (Calls: ${sessionCallVol.toLocaleString()} • Puts: ${sessionPutVol.toLocaleString()})`
           : 'P/C Vol: --';
 
-        document.getElementById('chain-kpi-oi').textContent = (totals.total_oi || 0).toLocaleString();
-        document.getElementById('chain-kpi-pc-oi').textContent = totals.put_call_oi_ratio != null
-          ? `P/C OI: ${totals.put_call_oi_ratio.toFixed(2)} (Calls: ${(totals.call_oi || 0).toLocaleString()} • Puts: ${(totals.put_oi || 0).toLocaleString()})`
+        document.getElementById('chain-kpi-oi').textContent = sessionTotOI.toLocaleString();
+        document.getElementById('chain-kpi-pc-oi').textContent = pcOI != null
+          ? `P/C OI: ${pcOI.toFixed(2)} (Calls: ${sessionCallOI.toLocaleString()} • Puts: ${sessionPutOI.toLocaleString()})`
           : 'P/C OI: --';
 
         // Update Chain Expiration Dropdown & Pills Bar
@@ -2481,26 +2528,46 @@ INDEX_HTML = r"""<!DOCTYPE html>
         returnToChain
       );
 
-      // Switch tab to Contract Lifecycle
-      switchTab('lifecycle');
+      // Switch tab to Contract Lifecycle without triggering competing auto-load
+      switchTab('lifecycle', true);
+
+      // Ensure symbol selection matches
+      const symSel = document.getElementById('sel-symbol');
+      if (symSel.value !== symbol) {
+        symSel.value = symbol;
+        updateSymbolInputDisplay(symbol);
+      }
 
       // Update Year filter
       const expYear = parseInt(expiration.split('-')[0], 10);
       const yearSel = document.getElementById('sel-year');
       if (yearSel.value !== String(expYear) && [...yearSel.options].some(o => o.value === String(expYear))) {
         yearSel.value = expYear;
-        await onYearChange(false);
       }
 
-      // Update Expiration
+      // Populate Expiration dropdown with target expiration
       const expSel = document.getElementById('sel-expiration');
+      if (![...expSel.options].some(o => o.value === expiration)) {
+        const opt = document.createElement('option');
+        opt.value = expiration;
+        opt.textContent = expiration;
+        expSel.appendChild(opt);
+      }
       expSel.value = expiration;
-      await onExpirationChange(false);
 
-      // Update Option Type & Strike
-      document.getElementById('sel-right').value = right.toLowerCase();
+      // Populate Strike dropdown with target strike
       const strikeSel = document.getElementById('sel-strike');
-      strikeSel.value = strike;
+      const numStrike = parseFloat(strike);
+      if (![...strikeSel.options].some(o => Math.abs(parseFloat(o.value) - numStrike) < 1e-4)) {
+        const opt = document.createElement('option');
+        opt.value = numStrike;
+        opt.textContent = `${numStrike}`;
+        strikeSel.appendChild(opt);
+      }
+      strikeSel.value = numStrike;
+
+      // Update Option Type
+      document.getElementById('sel-right').value = right.toLowerCase();
 
       // Sync Contract Date dropdown
       const contractDateSel = document.getElementById('sel-contract-date');
@@ -2508,7 +2575,46 @@ INDEX_HTML = r"""<!DOCTYPE html>
         contractDateSel.value = originTradeDate;
       }
 
+      // Load timeseries directly for this specific contract
       await loadContractSeries();
+
+      // Hydrate sibling expirations and strikes in background without overriding current selection
+      apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}&year=${expYear}`).then(meta => {
+        currentMeta = meta;
+        const curExp = expSel.value;
+        expSel.innerHTML = '';
+        (meta.expirations || []).forEach(ex => {
+          const opt = document.createElement('option');
+          opt.value = ex; opt.textContent = ex;
+          if (ex === curExp) opt.selected = true;
+          expSel.appendChild(opt);
+        });
+        if (![...expSel.options].some(o => o.value === curExp)) {
+          const opt = document.createElement('option');
+          opt.value = curExp; opt.textContent = curExp; opt.selected = true;
+          expSel.appendChild(opt);
+        }
+      }).catch(() => {});
+
+      apiGet(`/api/contracts?symbol=${encodeURIComponent(symbol)}&expiration=${encodeURIComponent(expiration)}&year=${expYear}`).then(data => {
+        currentContractsMeta = data;
+        const curStrike = strikeSel.value;
+        strikeSel.innerHTML = '';
+        const atm = data.atm_strike;
+        (data.strikes || []).forEach(st => {
+          const opt = document.createElement('option');
+          opt.value = st;
+          const isAtm = atm !== null && Math.abs(st - atm) < 1e-4;
+          opt.textContent = isAtm ? `${st} ★ (ATM)` : `${st}`;
+          if (Math.abs(st - parseFloat(curStrike)) < 1e-4) opt.selected = true;
+          strikeSel.appendChild(opt);
+        });
+        if (![...strikeSel.options].some(o => Math.abs(parseFloat(o.value) - parseFloat(curStrike)) < 1e-4)) {
+          const opt = document.createElement('option');
+          opt.value = curStrike; opt.textContent = curStrike; opt.selected = true;
+          strikeSel.appendChild(opt);
+        }
+      }).catch(() => {});
     }
 
     function returnToChain() {
