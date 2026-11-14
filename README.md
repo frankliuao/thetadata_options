@@ -208,10 +208,14 @@ Navigate to **http://127.0.0.1:8050**:
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  ThetaData Options & Greeks Interactive Dashboard                           │
-│  [ Symbol: AAPL ▼ ] [ Expiration: 2024-09-20 ▼ ] [ Strike: 220 ▼ ] [ CALL ]  │
-│  [ ⚡ Select ATM ] [ 🎯 Select Max OI ]       [ ☁ Pull from Google Drive ]    │
+│  [ Symbol: Search AAPL / Apple... ▼ ] [ Date: ◀ 2026-09-15 ▶ ] [ ⚡ Latest ]  │
+│  [ Expiration: 2026-09-21 (6d) ▼ ] [ Strike Filter: ±25% Active ▼ ]         │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Tabs: [ 📈 Contract Lifecycle ]  [ 🌐 IV Smile / Skew ]  [ 📋 Data Table ] │
+│  Tabs: [ 📅 Daily Option Chain ] [ 📈 Contract Lifecycle ] [ 🌐 IV Smile ]   │
+│                                                                             │
+│  Dual Option Chain: Calls (Delta, IV, Bid/Ask, Mid) | Strike | Puts         │
+│  • Click any contract's [📈 View] to jump directly to Contract Lifecycle    │
+│  • From Contract Lifecycle, click [📅 View Chain] on any date to jump back │
 │                                                                             │
 │  💡 TradingView Interactivity:                                              │
 │     • Click & drag chart body to Pan                                        │
@@ -223,13 +227,21 @@ Navigate to **http://127.0.0.1:8050**:
 ```
 
 #### Dashboard Features:
+- **📅 Daily Option Chain (Snapshot by Date)**: Inspect all available options across every strike and expiration for any trading day:
+  - **Market Snapshot KPIs**: Underlying spot price, ATM reference strike, total available expirations, total day option volume, open interest, and Put/Call volume/OI ratios.
+  - **Expirations Carousel**: Quick-switch pills for all trading expirations with DTE badges (e.g. `1d`, `3d`, `6d`, `31d`, `120d`).
+  - **Dual-Sided Option Chain (Calls | Strike | Puts)**: Side-by-side terminal layout with Delta, IV, Bid, Ask, Mid, Volume, and Open Interest.
+  - **In-The-Money (ITM) Highlighting**: Clear visual distinction for ITM vs. OTM options and prominent `★ ATM` badge.
+  - **Bidirectional Navigation**: Click any Call or Put row to jump directly into the full multi-year **Contract Lifecycle** view for that exact contract, with a 1-click **⬅ Return to Chain** breadcrumb.
 - **📈 Contract Lifecycle View**: Synchronized interactive charts tracking an option over its entire lifespan:
-  - Option Price (`Mid`, `Bid`, `Ask`) vs. Underlying Spot
+  - Option Price (`Mid`, `Bid`, `Ask`) vs. Underlying Spot & Strike
   - 1st-Order Greeks: `Delta` & `Gamma`, `Theta`, `Vega` (per 1%), `Rho` (per 1%)
   - Liquidity & Volatility: `Implied Volatility`, `Volume`, and `Open Interest`
   - 2nd-Order Greeks: `Vanna`, `Charm`, `Vomma`
+  - **Jump to Date**: 1-click dropdown and data table links to view any day's full cross-sectional option chain.
 - **🌐 IV Smile & Strike Greeks Cross-Section**: Select any historical `trade_date` and `expiration` to view the cross-sectional **Implied Volatility Smile / Skew**, strike vs. Greek profiles, and the **Call vs. Put Open Interest Wall**.
-- **📋 Data Table & CSV Export**: Inspect full daily tabular records with 1-click **CSV Download**.
+- **📋 Data Table & CSV Export**: Inspect full daily tabular records with 1-click **CSV Download** and per-row `📅 Chain` jumps.
+- **🔍 Searchable Combobox**: Real-time ticker and company name search with keyboard navigation (`↑`/`↓`/`Enter`) and local cache badges.
 - **🎯 1-Click Selectors**: Instant **Select ATM** and **Select Max OI** buttons.
 - **⚡ TradingView-Style Interactivity**: Drag chart canvas to pan, drag axes to scale price or timeline, double-click to auto-fit, and hold `Ctrl` / `⌘` while scrolling for gentle, smooth zoom (normal scrolling navigates the page smoothly).
 - **☁️ Hybrid Cloud Fetch**: Click **`☁ Pull from Google Drive`** to download only the active symbol's Parquet file into your local cache on demand.

@@ -609,6 +609,27 @@ class MockCliTests(unittest.TestCase):
             self.assertEqual(len(smile["chain"]), 2)
             self.assertEqual(smile["underlying_price"], 503.5)
 
+            # Option Chain snapshot query by date
+            chain = viewer.get_option_chain("SPY", trade_date="2024-01-03", expiration="2024-02-16")
+            self.assertEqual(chain["symbol"], "SPY")
+            self.assertEqual(chain["trade_date"], "2024-01-03")
+            self.assertEqual(chain["underlying_price"], 503.5)
+            self.assertEqual(chain["selected_expiration"], "2024-02-16")
+            self.assertEqual(len(chain["strikes"]), 2)
+            self.assertEqual(chain["strikes"][0]["strike"], 500.0)
+            self.assertIsNotNone(chain["strikes"][0]["call"])
+            self.assertIsNone(chain["strikes"][0]["put"])
+            self.assertEqual(chain["strikes"][0]["call"]["mid"], 11.2)
+            self.assertEqual(chain["strikes"][1]["strike"], 505.0)
+            self.assertIsNone(chain["strikes"][1]["call"])
+            self.assertIsNotNone(chain["strikes"][1]["put"])
+            self.assertEqual(chain["strikes"][1]["put"]["mid"], 7.7)
+            self.assertEqual(chain["totals"]["total_volume"], 240)
+
+            # Fallback to latest date if trade_date omitted
+            chain_latest = viewer.get_option_chain("SPY")
+            self.assertEqual(chain_latest["trade_date"], "2024-01-03")
+
     def test_viewer_html_chart_layout_separation(self) -> None:
         """Dashboard HTML chart layouts must cleanly separate title and horizontal legend, prevent overflow, and support smooth zoom."""
         from options_data.viewer import INDEX_HTML
@@ -624,6 +645,14 @@ class MockCliTests(unittest.TestCase):
         self.assertIn("chart-zoom-overlay", INDEX_HTML)
         self.assertIn("overflow: hidden", INDEX_HTML)
         self.assertIn("rawDelta = e.deltaX", INDEX_HTML)
+        self.assertIn("Daily Option Chain", INDEX_HTML)
+        self.assertIn("chain-table", INDEX_HTML)
+        self.assertIn("exp-pills-bar", INDEX_HTML)
+        self.assertIn("jumpToLifecycle", INDEX_HTML)
+        self.assertIn("returnToChain", INDEX_HTML)
+        self.assertIn("jumpFromContractToChain", INDEX_HTML)
+        self.assertIn("stepTradeDate", INDEX_HTML)
+        self.assertIn("filterChainStrikes", INDEX_HTML)
 
     def test_query_chain_trade_date_and_delta_parameters(self) -> None:
         """query_chain supports trade_date and signed min_delta/max_delta without TypeError."""
