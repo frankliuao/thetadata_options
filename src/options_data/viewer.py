@@ -1306,7 +1306,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     </div>
     <div class="status-bar">
       <span id="status-msg">Ready</span>
-      <button class="secondary" onclick="pullFromGDrive()" title="Pull missing Parquet files for this symbol from Google Drive">☁ Pull Symbol from Google Drive</button>
+      <button class="secondary" onclick="pullFromGDrive()" title="Pull missing Parquet files for this ticker from Google Drive">☁ Pull Ticker from Google Drive</button>
     </div>
   </header>
 

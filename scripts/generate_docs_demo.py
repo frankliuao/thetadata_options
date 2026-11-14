@@ -650,7 +650,7 @@ def export_docs_html() -> None:
 
     # 4. Replace GDrive pull button with repo action button in header
     old_status_bar = """      <span id="status-msg">Ready</span>
-      <button class="secondary" onclick="pullFromGDrive()" title="Pull missing Parquet files for this symbol from Google Drive">☁ Pull Symbol from Google Drive</button>"""
+      <button class="secondary" onclick="pullFromGDrive()" title="Pull missing Parquet files for this ticker from Google Drive">☁ Pull Ticker from Google Drive</button>"""
     new_status_bar = """      <span id="status-msg">Ready (Demo Mode)</span>
       <button class="secondary" onclick="alert('This is a static GitHub Pages demo running on simulated Black-Scholes mock data. To download real options data, clone the repo and run locally.')" title="Demo Mode Info">ℹ️ Mock Mode Info</button>"""
     if old_status_bar in html:

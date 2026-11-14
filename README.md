@@ -244,7 +244,7 @@ Navigate to **http://127.0.0.1:8050**:
 - **🔍 Searchable Combobox**: Real-time ticker and company name search with keyboard navigation (`↑`/`↓`/`Enter`) and local cache badges.
 - **🎯 1-Click Selectors**: Instant **Select ATM** and **Select Max OI** buttons.
 - **⚡ TradingView-Style Interactivity**: Drag chart canvas to pan, drag axes to scale price or timeline, double-click to auto-fit, and hold `Ctrl` / `⌘` while scrolling for gentle, smooth zoom (normal scrolling navigates the page smoothly).
-- **☁️ Hybrid Cloud Fetch**: Click **`☁ Pull from Google Drive`** to download only the active symbol's Parquet file into your local cache on demand.
+- **☁️ Hybrid Cloud Fetch**: Click **`☁ Pull Ticker from Google Drive`** to download only the active ticker's Parquet file into your local cache on demand.
 
 ---
 
