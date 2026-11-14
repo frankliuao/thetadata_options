@@ -569,6 +569,21 @@ INDEX_HTML = r"""<!DOCTYPE html>
       min-width: 110px;
       outline: none;
     }
+    input[type="date"] {
+      color-scheme: dark;
+      cursor: pointer;
+      font-family: inherit;
+      min-width: 135px;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      filter: invert(0.8) sepia(1) saturate(5) hue-rotate(175deg);
+      opacity: 0.85;
+      transition: opacity 0.15s;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
     select:focus, input:focus {
       border-color: var(--accent);
     }
@@ -1137,8 +1152,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
   <header>
     <div class="brand">
       <span>⚡ ThetaData Options & Greeks Explorer</span>
-      <span class="badge">Polars Lazy Engine</span>
-      <span class="badge badge-green" id="cache-badge">Local + GDrive Hybrid</span>
     </div>
     <div class="status-bar">
       <span id="status-msg">Ready</span>
@@ -1187,7 +1200,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       <label>Snapshot Trade Date</label>
       <div style="display:flex; gap:4px; align-items:center;">
         <button class="secondary" onclick="stepTradeDate(-1)" title="Previous Trading Day">◀</button>
-        <select id="sel-chain-date" onchange="onChainDateChange()"></select>
+        <input type="date" id="sel-chain-date" onclick="this.showPicker && this.showPicker()" onchange="onChainDateChange()" />
         <button class="secondary" onclick="stepTradeDate(1)" title="Next Trading Day">▶</button>
         <button class="secondary" onclick="jumpToLatestDate()" title="Jump to Latest Session">⚡ Latest</button>
       </div>
@@ -1245,7 +1258,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     <div class="field hidden" id="fld-jump-chain">
       <label>Cross-Section at Date</label>
       <div style="display:flex; gap:4px;">
-        <select id="sel-contract-date"></select>
+        <input type="date" id="sel-contract-date" onclick="this.showPicker && this.showPicker()" />
         <button class="secondary" onclick="jumpFromContractToChain()" title="Inspect the full option chain across all strikes on this date">📅 View Day Chain</button>
       </div>
     </div>
@@ -1253,7 +1266,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     <!-- CONTROLS FOR TAB 3: SMILE -->
     <div class="field hidden" id="fld-tradedate">
       <label>Trade Date (Snapshot)</label>
-      <select id="sel-tradedate" onchange="loadChainSmile()"></select>
+      <input type="date" id="sel-tradedate" onclick="this.showPicker && this.showPicker()" onchange="loadChainSmile()" />
     </div>
   </div>
 
@@ -2127,28 +2140,30 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const meta = await apiGet(`/api/metadata?symbol=${encodeURIComponent(sym)}`);
         currentMeta = meta;
 
-        // Populate Chain Trade Dates dropdown
-        const chainDateSel = document.getElementById('sel-chain-date');
-        chainDateSel.innerHTML = '';
-        const contractDateSel = document.getElementById('sel-contract-date');
-        contractDateSel.innerHTML = '';
-        const smileDateSel = document.getElementById('sel-tradedate');
-        smileDateSel.innerHTML = '';
-
+        // Configure Calendar Trade Date Pickers
         const dates = meta.trade_dates || [];
-        for (let i = dates.length - 1; i >= 0; i--) {
-          const d = dates[i];
-          const o1 = document.createElement('option');
-          o1.value = d; o1.textContent = d;
-          chainDateSel.appendChild(o1);
+        const minDate = dates.length > 0 ? dates[0] : '';
+        const maxDate = dates.length > 0 ? dates[dates.length - 1] : '';
 
-          const o2 = document.createElement('option');
-          o2.value = d; o2.textContent = d;
-          contractDateSel.appendChild(o2);
+        const chainDateInput = document.getElementById('sel-chain-date');
+        if (chainDateInput) {
+          chainDateInput.min = minDate;
+          chainDateInput.max = maxDate;
+          if (maxDate) chainDateInput.value = maxDate;
+        }
 
-          const o3 = document.createElement('option');
-          o3.value = d; o3.textContent = d;
-          smileDateSel.appendChild(o3);
+        const contractDateInput = document.getElementById('sel-contract-date');
+        if (contractDateInput) {
+          contractDateInput.min = minDate;
+          contractDateInput.max = maxDate;
+          if (maxDate) contractDateInput.value = maxDate;
+        }
+
+        const smileDateInput = document.getElementById('sel-tradedate');
+        if (smileDateInput) {
+          smileDateInput.min = minDate;
+          smileDateInput.max = maxDate;
+          if (maxDate) smileDateInput.value = maxDate;
         }
 
         // Populate Years dropdown
@@ -2165,8 +2180,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const allOpt = document.createElement('option');
         allOpt.value = ''; allOpt.textContent = 'All Years (2016-2026)';
         yearSel.appendChild(allOpt);
-
-        document.getElementById('cache-badge').textContent = `${sym}: ${years.length} Yearly Parquets Cached`;
 
         if (currentTab === 'chain') {
           await loadOptionChain();
@@ -2364,26 +2377,50 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
 
     function onChainDateChange() {
+      const input = document.getElementById('sel-chain-date');
+      const val = input.value;
+      if (!val) return;
+      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      if (!dates.length) return;
+
+      // If user selected a weekend/holiday on the calendar, snap to closest available trading session
+      if (!dates.includes(val)) {
+        let closest = dates[0];
+        let minDiff = Math.abs(new Date(val) - new Date(closest));
+        for (const d of dates) {
+          const diff = Math.abs(new Date(val) - new Date(d));
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = d;
+          }
+        }
+        input.value = closest;
+        setStatus(`📅 Snapped to nearest trading session: ${closest}`);
+      }
       loadOptionChain();
     }
 
     function stepTradeDate(direction) {
-      const sel = document.getElementById('sel-chain-date');
-      const idx = sel.selectedIndex;
-      // Note: options are ordered newest -> oldest (idx 0 is newest)
-      // Step -1 means previous day (older, so index + 1)
-      // Step +1 means next day (newer, so index - 1)
-      const targetIdx = idx - direction;
-      if (targetIdx >= 0 && targetIdx < sel.options.length) {
-        sel.selectedIndex = targetIdx;
-        loadOptionChain();
+      const input = document.getElementById('sel-chain-date');
+      const curDate = input.value;
+      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      if (!dates.length) return;
+
+      let idx = dates.indexOf(curDate);
+      if (idx === -1) {
+        idx = dates.length - 1;
       }
+      // Note: direction -1 means previous trading day, +1 means next trading day
+      const targetIdx = Math.max(0, Math.min(dates.length - 1, idx + direction));
+      input.value = dates[targetIdx];
+      loadOptionChain();
     }
 
     function jumpToLatestDate() {
-      const sel = document.getElementById('sel-chain-date');
-      if (sel.options.length > 0) {
-        sel.selectedIndex = 0;
+      const input = document.getElementById('sel-chain-date');
+      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      if (dates.length > 0) {
+        input.value = dates[dates.length - 1];
         loadOptionChain();
       }
     }
@@ -2956,9 +2993,25 @@ INDEX_HTML = r"""<!DOCTYPE html>
     async function loadChainSmile() {
       const thisToken = ++smileLoadToken;
       const sym = document.getElementById('sel-symbol').value;
-      const td = document.getElementById('sel-tradedate').value;
+      const tdInput = document.getElementById('sel-tradedate');
+      let td = tdInput.value;
       const exp = document.getElementById('sel-expiration').value;
       if (!sym || !td) return;
+
+      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      if (dates.length && !dates.includes(td)) {
+        let closest = dates[0];
+        let minDiff = Math.abs(new Date(td) - new Date(closest));
+        for (const d of dates) {
+          const diff = Math.abs(new Date(td) - new Date(d));
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = d;
+          }
+        }
+        td = closest;
+        tdInput.value = closest;
+      }
 
       setStatus(`Loading option chain cross-section for ${sym} on ${td}...`);
       const url = `/api/smile?symbol=${encodeURIComponent(sym)}&trade_date=${encodeURIComponent(td)}&expiration=${encodeURIComponent(exp)}`;

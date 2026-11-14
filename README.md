@@ -440,12 +440,24 @@ print(df)
 
 ## 🧪 Testing
 
-The test suite includes **32 offline unit tests** covering schema casting, mathematical Greek scaling, multi-threaded catch-up synchronization, error recovery, internal gap healing, dual-class symbology, and the visualization query engine without requiring ThetaData credentials:
+The test suite includes **35 offline unit tests** covering schema casting, mathematical Greek scaling, multi-threaded catch-up synchronization, error recovery, internal gap healing, dual-class symbology, and the visualization query engine without requiring ThetaData credentials:
 
 ```bash
 # Run full unit test suite:
 poetry run python -m unittest discover -s tests -v
 ```
+
+---
+
+## 🤖 Contributing & AI Agent Guidelines
+
+To maintain visual and behavioral parity across both the live application and the public demo:
+- **Dual-Surface Parity Rule**: Whenever you add or modify a feature, control, chart, or style in the core application (`src/options_data/viewer.py`), you **MUST** also synchronize the static GitHub Pages demo in `docs/` by running:
+  ```bash
+  poetry run python scripts/generate_docs_demo.py
+  ```
+- **Strict Invariant**: Never edit only `docs/index.html` without updating the core app (`src/options_data/viewer.py`), and never update `viewer.py` without regenerating `docs/`. Both surfaces must maintain 100% parity.
+- Detailed contributor and AI agent instructions are documented in [`AGENTS.md`](AGENTS.md).
 
 ---
 

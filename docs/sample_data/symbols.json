@@ -1,0 +1,31 @@
+{
+  "symbols": [
+    {
+      "symbol": "AAPL",
+      "company_name": "Apple Inc. [Synthetic Mock]",
+      "cached_years": [
+        2026
+      ],
+      "cached_count": 1,
+      "is_mock": true
+    },
+    {
+      "symbol": "MSFT",
+      "company_name": "Microsoft Corp. [Synthetic Mock]",
+      "cached_years": [
+        2026
+      ],
+      "cached_count": 1,
+      "is_mock": true
+    },
+    {
+      "symbol": "NVDA",
+      "company_name": "NVIDIA Corp. [Synthetic Mock]",
+      "cached_years": [
+        2026
+      ],
+      "cached_count": 1,
+      "is_mock": true
+    }
+  ]
+}
