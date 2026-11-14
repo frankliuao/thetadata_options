@@ -1458,6 +1458,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
     // State
     let currentMeta = null;
+    let allTradeDates = [];
     let currentChainData = null;
     let currentContractsMeta = null;
     let currentSeries = [];
@@ -2133,15 +2134,17 @@ INDEX_HTML = r"""<!DOCTYPE html>
       currentChainData = null;
       currentSeries = [];
       currentContractsMeta = null;
+      allTradeDates = [];
       originChainContext = null;
       closeBanner();
 
       try {
         const meta = await apiGet(`/api/metadata?symbol=${encodeURIComponent(sym)}`);
         currentMeta = meta;
+        allTradeDates = meta.trade_dates || [];
 
         // Configure Calendar Trade Date Pickers
-        const dates = meta.trade_dates || [];
+        const dates = allTradeDates;
         const minDate = dates.length > 0 ? dates[0] : '';
         const maxDate = dates.length > 0 ? dates[dates.length - 1] : '';
 
@@ -2380,7 +2383,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const input = document.getElementById('sel-chain-date');
       const val = input.value;
       if (!val) return;
-      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
       if (!dates.length) return;
 
       // If user selected a weekend/holiday on the calendar, snap to closest available trading session
@@ -2403,7 +2406,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     function stepTradeDate(direction) {
       const input = document.getElementById('sel-chain-date');
       const curDate = input.value;
-      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
       if (!dates.length) return;
 
       let idx = dates.indexOf(curDate);
@@ -2418,7 +2421,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
     function jumpToLatestDate() {
       const input = document.getElementById('sel-chain-date');
-      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
       if (dates.length > 0) {
         input.value = dates[dates.length - 1];
         loadOptionChain();
@@ -2998,7 +3001,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const exp = document.getElementById('sel-expiration').value;
       if (!sym || !td) return;
 
-      const dates = currentMeta ? currentMeta.trade_dates || [] : [];
+      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
       if (dates.length && !dates.includes(td)) {
         let closest = dates[0];
         let minDiff = Math.abs(new Date(td) - new Date(closest));
