@@ -1436,15 +1436,20 @@
       if (!toast) {
         toast = document.createElement('div');
         toast.className = 'chart-zoom-overlay';
-        const isMac = (navigator.platform || '').toUpperCase().includes('MAC') || (navigator.userAgent || '').includes('Mac');
-        toast.textContent = `Hold ${isMac ? '⌘' : 'Ctrl'} + scroll to zoom chart`;
         gd.appendChild(toast);
+      }
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      if (isTouch) {
+        toast.textContent = 'Slide along any axis to adjust range • Double-tap to reset';
+      } else {
+        const isMac = (navigator.platform || '').toUpperCase().includes('MAC') || (navigator.userAgent || '').includes('Mac');
+        toast.textContent = `Hold ${isMac ? '⌘' : 'Ctrl'} + scroll or drag axes to scale`;
       }
       toast.classList.add('visible');
       clearTimeout(gd._zoomHintTimeout);
       gd._zoomHintTimeout = setTimeout(() => {
         toast.classList.remove('visible');
-      }, 900);
+      }, 1200);
     }
 
     function attachTradingViewInteractions(gd) {
@@ -1461,15 +1466,14 @@
       }
 
       let dragCtx = null;
+      let touchDragCtx = null;
       let rafId = null;
+      let lastTapTime = 0;
+      let lastTapAxis = null;
 
-      gd.addEventListener('mousemove', function(e) {
-        if (dragCtx) return;
-        if (!gd._fullLayout) return;
-
+      function getAxisAtPoint(x, y, isTouch = false) {
+        if (!gd._fullLayout) return null;
         const rect = gd.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
         const w = rect.width;
         const h = rect.height;
 
@@ -1477,20 +1481,36 @@
         const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
         const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
         const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
-
         const hasY2 = !!gd._fullLayout.yaxis2;
 
-        if (y >= h - mb - 5 && x >= ml && x <= w - mr) {
+        const pad = isTouch ? 25 : 8;
+
+        if (y >= h - mb - pad && x >= ml - pad && x <= w - mr + pad) {
+          return 'xaxis';
+        } else if (x <= ml + pad && y >= mt - pad && y <= h - mb + pad) {
+          return 'yaxis';
+        } else if (hasY2 && x >= w - mr - pad && y >= mt - pad && y <= h - mb + pad) {
+          return 'yaxis2';
+        }
+        return null;
+      }
+
+      gd.addEventListener('mousemove', function(e) {
+        if (dragCtx) return;
+        const rect = gd.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const axisKey = getAxisAtPoint(x, y, false);
+        if (axisKey === 'xaxis') {
           gd.style.cursor = 'ew-resize';
-        } else if (x <= ml + 5 && y >= mt && y <= h - mb) {
-          gd.style.cursor = 'ns-resize';
-        } else if (hasY2 && x >= w - mr - 5 && y >= mt && y <= h - mb) {
+        } else if (axisKey === 'yaxis' || axisKey === 'yaxis2') {
           gd.style.cursor = 'ns-resize';
         } else {
           gd.style.cursor = '';
         }
       });
 
+      // Mouse drag on axes (Desktop)
       gd.addEventListener('mousedown', function(e) {
         if (e.button !== 0) return;
         if (!gd._fullLayout) return;
@@ -1498,25 +1518,7 @@
         const rect = gd.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        const w = rect.width;
-        const h = rect.height;
-
-        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
-        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
-        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
-        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
-
-        const hasY2 = !!gd._fullLayout.yaxis2;
-
-        let axisKey = null;
-        if (y >= h - mb - 5 && x >= ml && x <= w - mr) {
-          axisKey = 'xaxis';
-        } else if (x <= ml + 5 && y >= mt && y <= h - mb) {
-          axisKey = 'yaxis';
-        } else if (hasY2 && x >= w - mr - 5 && y >= mt && y <= h - mb) {
-          axisKey = 'yaxis2';
-        }
-
+        const axisKey = getAxisAtPoint(x, y, false);
         if (!axisKey) return;
 
         e.stopPropagation();
@@ -1539,12 +1541,19 @@
         const startSpan = startMax - startMin;
         if (!startSpan || isNaN(startSpan)) return;
 
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
+        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
+        const w = rect.width;
+        const h = rect.height;
+
         let anchorVal;
         if (axisKey === 'xaxis') {
-          const frac = Math.max(0, Math.min(1, (x - ml) / (w - ml - mr)));
+          const frac = Math.max(0, Math.min(1, (x - ml) / Math.max(1, w - ml - mr)));
           anchorVal = startMin + frac * startSpan;
         } else {
-          const frac = Math.max(0, Math.min(1, (h - mb - y) / (h - mt - mb)));
+          const frac = Math.max(0, Math.min(1, (h - mb - y) / Math.max(1, h - mt - mb)));
           anchorVal = startMin + frac * startSpan;
         }
 
@@ -1617,6 +1626,156 @@
         }
         dragCtx = null;
       }
+
+      // Touch drag on axes & suppress erratic 2-finger pinch reset (Mobile / Touch Devices)
+      gd.addEventListener('touchstart', function(e) {
+        if (!gd._fullLayout) return;
+
+        if (e.touches.length > 1) {
+          // Block buggy 2-finger pinch from resetting the chart
+          e.preventDefault();
+          e.stopPropagation();
+          showZoomHint(gd);
+          if (touchDragCtx) touchDragCtx = null;
+          return;
+        }
+
+        const touch = e.touches[0];
+        const rect = gd.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        const axisKey = getAxisAtPoint(x, y, true);
+        if (!axisKey) return; // Touch is inside main canvas -> let Plotly perform smooth 1-finger pan
+
+        // Check for double-tap to reset this axis
+        const now = Date.now();
+        if (now - lastTapTime < 350 && lastTapAxis === axisKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          Plotly.relayout(gd, { [`${axisKey}.autorange`]: true });
+          touchDragCtx = null;
+          lastTapTime = 0;
+          return;
+        }
+        lastTapTime = now;
+        lastTapAxis = axisKey;
+
+        const ax = gd._fullLayout[axisKey];
+        if (!ax || !ax.range) return;
+
+        const isDate = (axisKey === 'xaxis' && (ax.type === 'date' || (typeof ax.range[0] === 'string' && ax.range[0].includes('-'))));
+        let startMin, startMax;
+        if (isDate) {
+          startMin = parsePlotlyDate(ax.range[0]);
+          startMax = parsePlotlyDate(ax.range[1]);
+        } else {
+          startMin = Number(ax.range[0]);
+          startMax = Number(ax.range[1]);
+        }
+
+        const startSpan = startMax - startMin;
+        if (!startSpan || isNaN(startSpan)) return;
+
+        const ml = gd._fullLayout.margin ? gd._fullLayout.margin.l : 65;
+        const mr = gd._fullLayout.margin ? gd._fullLayout.margin.r : 65;
+        const mb = gd._fullLayout.margin ? gd._fullLayout.margin.b : 45;
+        const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
+        const w = rect.width;
+        const h = rect.height;
+
+        let anchorVal;
+        if (axisKey === 'xaxis') {
+          const frac = Math.max(0, Math.min(1, (x - ml) / Math.max(1, w - ml - mr)));
+          anchorVal = startMin + frac * startSpan;
+        } else {
+          const frac = Math.max(0, Math.min(1, (h - mb - y) / Math.max(1, h - mt - mb)));
+          anchorVal = startMin + frac * startSpan;
+        }
+
+        touchDragCtx = {
+          axisKey,
+          isDate,
+          startMin,
+          startMax,
+          startSpan,
+          anchorVal,
+          startX: touch.clientX,
+          startY: touch.clientY,
+          identifier: touch.identifier
+        };
+
+        e.preventDefault();
+      }, { passive: false });
+
+      gd.addEventListener('touchmove', function(e) {
+        if (e.touches.length > 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        if (!touchDragCtx) return;
+        const touch = Array.from(e.touches).find(t => t.identifier === touchDragCtx.identifier);
+        if (!touch) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dx = touch.clientX - touchDragCtx.startX;
+        const dy = touch.clientY - touchDragCtx.startY;
+
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          if (!touchDragCtx) return;
+          let factor;
+          if (touchDragCtx.axisKey === 'xaxis') {
+            factor = Math.exp(-dx * 0.007);
+          } else {
+            factor = Math.exp(dy * 0.007);
+          }
+          factor = Math.max(0.01, Math.min(100, factor));
+
+          const a = touchDragCtx.anchorVal;
+          const newMin = a - (a - touchDragCtx.startMin) * factor;
+          const newMax = a + (touchDragCtx.startMax - a) * factor;
+
+          let rangeVal;
+          if (touchDragCtx.isDate) {
+            rangeVal = [
+              formatPlotlyDate(newMin),
+              formatPlotlyDate(newMax)
+            ];
+          } else {
+            rangeVal = [newMin, newMax];
+          }
+
+          Plotly.relayout(gd, {
+            [`${touchDragCtx.axisKey}.range`]: rangeVal,
+            [`${touchDragCtx.axisKey}.autorange`]: false
+          });
+        });
+      }, { passive: false });
+
+      gd.addEventListener('touchend', function(e) {
+        if (touchDragCtx) {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+          touchDragCtx = null;
+        }
+      });
+
+      gd.addEventListener('touchcancel', function(e) {
+        if (touchDragCtx) {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+          touchDragCtx = null;
+        }
+      });
 
       gd.addEventListener('wheel', function(e) {
         if (!gd._fullLayout) return;
