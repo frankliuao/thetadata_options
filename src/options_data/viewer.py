@@ -122,7 +122,6 @@ class OptionsViewerBackend:
         years_filter = [year] if year is not None else None
         lf = self.loader.scan_symbol(sym, years=years_filter)
 
-        # Collect available years from all local files first
         all_local_files = self.loader.ensure_local_parquets(sym, years=years_filter)
         available_years = sorted(
             {
@@ -198,7 +197,6 @@ class OptionsViewerBackend:
                 underlying_ref = r["last_underlying"]
                 break
 
-        # Find ATM strike closest to underlying_ref
         atm_strike = None
         if strikes and underlying_ref:
             atm_strike = min(strikes, key=lambda s: abs(s - underlying_ref))
@@ -226,7 +224,6 @@ class OptionsViewerBackend:
         sym = validate_symbol(symbol)
         exp_date = datetime.date.fromisoformat(expiration)
         right_clean = right.strip().lower()
-        # Note: a contract expiring in `exp_date` may have traded in `exp_date.year` and `exp_date.year - 1`
         years_filter = [year] if year is not None else None
 
         lf = (
@@ -287,6 +284,142 @@ class OptionsViewerBackend:
             "chain": _df_to_records(df),
         }
 
+    def get_option_chain(
+        self,
+        symbol: str,
+        trade_date: str | None = None,
+        expiration: str | None = None,
+    ) -> dict[str, Any]:
+        """Return cross-sectional option chain on `trade_date` with all available expirations and paired strikes."""
+        sym = validate_symbol(symbol)
+
+        all_metadata = self.get_symbol_metadata(sym)
+        available_dates = all_metadata.get("trade_dates", [])
+        if not available_dates:
+            return {
+                "symbol": sym,
+                "trade_date": None,
+                "available_trade_dates": [],
+                "expirations": [],
+                "selected_expiration": None,
+                "selected_dte": None,
+                "underlying_price": None,
+                "strikes": [],
+                "totals": {},
+            }
+
+        td_str = trade_date if trade_date and trade_date in available_dates else available_dates[-1]
+        td_date = datetime.date.fromisoformat(td_str)
+
+        lf = self.loader.scan_symbol(sym, years=[td_date.year]).filter(pl.col("trade_date") == td_date)
+        df = lf.collect()
+        if df.is_empty():
+            return {
+                "symbol": sym,
+                "trade_date": td_str,
+                "available_trade_dates": available_dates,
+                "expirations": [],
+                "selected_expiration": None,
+                "selected_dte": None,
+                "underlying_price": None,
+                "strikes": [],
+                "totals": {},
+            }
+
+        underlying_price = None
+        if "underlying_price" in df.columns:
+            valid_u = df["underlying_price"].drop_nulls()
+            if not valid_u.is_empty():
+                underlying_price = _clean_json_val(float(valid_u[0]))
+
+        exp_summary_df = (
+            df.group_by("expiration")
+            .agg(
+                [
+                    pl.col("dte").first().alias("dte"),
+                    pl.len().alias("contract_count"),
+                    pl.col("volume").sum().alias("total_volume"),
+                    pl.col("open_interest").sum().alias("total_oi"),
+                    pl.col("volume").filter(pl.col("right") == "call").sum().alias("calls_volume"),
+                    pl.col("volume").filter(pl.col("right") == "put").sum().alias("puts_volume"),
+                    pl.col("open_interest").filter(pl.col("right") == "call").sum().alias("calls_oi"),
+                    pl.col("open_interest").filter(pl.col("right") == "put").sum().alias("puts_oi"),
+                ]
+            )
+            .sort("expiration")
+        )
+        exp_records = _df_to_records(exp_summary_df)
+        avail_exps = [r["expiration"] for r in exp_records if r.get("expiration")]
+
+        selected_exp = expiration
+        if not selected_exp or selected_exp not in avail_exps:
+            preferred = [r["expiration"] for r in exp_records if (r.get("dte") or 0) >= 2]
+            selected_exp = preferred[0] if preferred else (avail_exps[0] if avail_exps else None)
+
+        strikes_list: list[dict[str, Any]] = []
+        selected_dte = None
+        totals: dict[str, Any] = {}
+
+        if selected_exp:
+            exp_date_obj = datetime.date.fromisoformat(selected_exp)
+            sub_df = df.filter(pl.col("expiration") == exp_date_obj).sort(["strike", "right"])
+            sub_records = _df_to_records(sub_df)
+            if sub_records:
+                selected_dte = sub_records[0].get("dte")
+
+            strikes_map: dict[float, dict[str, Any]] = {}
+            for r in sub_records:
+                st = float(r["strike"])
+                if st not in strikes_map:
+                    moneyness = None
+                    if underlying_price and underlying_price > 0:
+                        moneyness = round(((st - underlying_price) / underlying_price) * 100, 2)
+                    strikes_map[st] = {
+                        "strike": st,
+                        "is_atm": False,
+                        "moneyness_pct": moneyness,
+                        "call": None,
+                        "put": None,
+                    }
+                right = str(r.get("right", "")).lower()
+                if right in ("call", "put"):
+                    strikes_map[st][right] = r
+
+            sorted_strikes = sorted(strikes_map.keys())
+            if sorted_strikes and underlying_price is not None:
+                atm_st = min(sorted_strikes, key=lambda s: abs(s - underlying_price))
+                if atm_st in strikes_map:
+                    strikes_map[atm_st]["is_atm"] = True
+
+            strikes_list = [strikes_map[st] for st in sorted_strikes]
+
+            c_vol = sum((r["call"].get("volume") or 0) for r in strikes_list if r["call"])
+            p_vol = sum((r["put"].get("volume") or 0) for r in strikes_list if r["put"])
+            c_oi = sum((r["call"].get("open_interest") or 0) for r in strikes_list if r["call"])
+            p_oi = sum((r["put"].get("open_interest") or 0) for r in strikes_list if r["put"])
+            totals = {
+                "call_volume": c_vol,
+                "put_volume": p_vol,
+                "total_volume": c_vol + p_vol,
+                "call_oi": c_oi,
+                "put_oi": p_oi,
+                "total_oi": c_oi + p_oi,
+                "put_call_volume_ratio": round(p_vol / c_vol, 3) if c_vol > 0 else None,
+                "put_call_oi_ratio": round(p_oi / c_oi, 3) if c_oi > 0 else None,
+            }
+
+        return {
+            "symbol": sym,
+            "trade_date": td_str,
+            "available_trade_dates": available_dates,
+            "underlying_price": underlying_price,
+            "expirations": exp_records,
+            "selected_expiration": selected_exp,
+            "selected_dte": selected_dte,
+            "strikes": strikes_list,
+            "totals": totals,
+        }
+
     def fetch_from_gdrive(self, symbol: str, year: int | None = None) -> dict[str, Any]:
         """Explicitly pull `symbol` (and optional `year`) from Google Drive into local cache."""
         sym = validate_symbol(symbol)
@@ -314,6 +447,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       --bg-panel: #111827;
       --bg-card: #1e293b;
       --border: #334155;
+      --border-subtle: #1e293b;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --accent: #38bdf8;
@@ -321,6 +455,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
       --accent-red: #ef4444;
       --accent-purple: #a855f7;
       --accent-amber: #f59e0b;
+      --call-color: #22c55e;
+      --put-color: #ef4444;
+      --itm-call-bg: rgba(34, 197, 94, 0.08);
+      --itm-put-bg: rgba(239, 68, 68, 0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -333,7 +471,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     header {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -344,7 +482,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--accent);
     }
@@ -365,11 +503,11 @@ INDEX_HTML = r"""<!DOCTYPE html>
     .toolbar {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       flex-wrap: wrap;
       align-items: flex-end;
-      gap: 14px;
+      gap: 12px;
     }
     .field {
       display: flex;
@@ -377,7 +515,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       gap: 4px;
     }
     .field label {
-      font-size: 11px;
+      font-size: 10.5px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-muted);
@@ -388,9 +526,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
       color: var(--text-main);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 7px 10px;
-      font-size: 13px;
-      min-width: 120px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      min-width: 110px;
       outline: none;
     }
     select:focus, input:focus {
@@ -401,17 +539,21 @@ INDEX_HTML = r"""<!DOCTYPE html>
       color: #020617;
       border: none;
       border-radius: 6px;
-      padding: 7px 14px;
+      padding: 6px 12px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      transition: opacity 0.15s;
+      transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
     }
     button:hover { opacity: 0.9; }
     button.secondary {
       background: var(--bg-card);
       color: var(--text-main);
       border: 1px solid var(--border);
+    }
+    button.secondary:hover {
+      background: #334155;
     }
     button.secondary.active {
       border-color: var(--accent);
@@ -420,8 +562,8 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
     .tabs {
       display: flex;
-      gap: 8px;
-      padding: 12px 20px 0;
+      gap: 6px;
+      padding: 8px 20px 0;
       border-bottom: 1px solid var(--border);
       background: var(--bg-primary);
     }
@@ -431,33 +573,91 @@ INDEX_HTML = r"""<!DOCTYPE html>
       border: none;
       border-bottom: 2px solid transparent;
       border-radius: 0;
-      padding: 8px 16px;
-      font-size: 13px;
+      padding: 8px 14px;
+      font-size: 12.5px;
       font-weight: 600;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
     }
     .tab-btn.active {
       color: var(--accent);
       border-bottom-color: var(--accent);
     }
+
+    /* Contextual Navigation Breadcrumb Banner */
+    .nav-context-banner {
+      margin: 12px 20px 0 20px;
+      padding: 9px 14px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .banner-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .banner-badge {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    #banner-text {
+      font-weight: 700;
+      color: #fff;
+    }
+    .banner-sub {
+      color: var(--text-muted);
+      font-size: 11.5px;
+    }
+    .btn-banner-action {
+      background: var(--accent);
+      color: #0b0f19;
+      font-weight: 700;
+      font-size: 11.5px;
+      padding: 5px 12px;
+    }
+    .btn-banner-close {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 2px 6px;
+    }
+    .btn-banner-close:hover {
+      color: #fff;
+    }
+
+    /* KPI Summary Strips */
     .kpi-strip {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
       gap: 10px;
-      padding: 14px 20px;
+      padding: 12px 20px;
     }
     .kpi-card {
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 9px 12px;
     }
     .kpi-title {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
     .kpi-value {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       margin-top: 3px;
     }
@@ -466,6 +666,193 @@ INDEX_HTML = r"""<!DOCTYPE html>
       color: var(--text-muted);
       margin-top: 2px;
     }
+
+    /* Option Chain Expiration Pills Bar */
+    .chain-exp-container {
+      padding: 10px 20px 4px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chain-exp-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .exp-pills-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+    .exp-pills-bar::-webkit-scrollbar {
+      height: 6px;
+    }
+    .exp-pills-bar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    .exp-pill {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 11.5px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .exp-pill:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .exp-pill.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.18);
+      color: #fff;
+      font-weight: 700;
+    }
+    .exp-pill .dte-tag {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .exp-pill .vol-tag {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Dual Option Chain Table */
+    .chain-table-wrapper {
+      padding: 6px 20px 20px;
+      overflow-x: auto;
+    }
+    .chain-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 11.5px;
+    }
+    .chain-table th, .chain-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #1e293b;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .chain-table thead tr:first-child th {
+      background: #0f172a;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-align: center;
+      border-bottom: 2px solid var(--border);
+      padding: 8px 10px;
+    }
+    .chain-table thead tr:nth-child(2) th {
+      background: var(--bg-card);
+      font-size: 10.5px;
+      color: var(--text-muted);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .chain-table .th-calls {
+      color: var(--call-color);
+      border-right: 1px solid var(--border);
+    }
+    .chain-table .th-puts {
+      color: var(--put-color);
+      border-left: 1px solid var(--border);
+    }
+    .chain-table .th-strike {
+      color: var(--accent);
+      background: #182234 !important;
+    }
+    .chain-table td.td-strike {
+      text-align: center;
+      font-weight: 700;
+      font-size: 12.5px;
+      color: #fff;
+      background: #141e30;
+      border-left: 1px solid #334155;
+      border-right: 1px solid #334155;
+      position: relative;
+    }
+    .chain-table td.td-strike.strike-atm {
+      background: rgba(56, 189, 248, 0.22);
+      color: var(--accent);
+      border-top: 1px solid var(--accent);
+      border-bottom: 1px solid var(--accent);
+    }
+    .atm-badge {
+      display: inline-block;
+      font-size: 9px;
+      background: var(--accent);
+      color: #0b0f19;
+      padding: 0 4px;
+      border-radius: 3px;
+      margin-left: 4px;
+      font-weight: 800;
+      vertical-align: middle;
+    }
+    .chain-table tr:hover td {
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .chain-table tr:hover td.td-strike {
+      background: #1e293b;
+    }
+    .chain-table tr.itm-call td.call-cell {
+      background: var(--itm-call-bg);
+    }
+    .chain-table tr.itm-put td.put-cell {
+      background: var(--itm-put-bg);
+    }
+    .btn-action-view {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: background 0.15s;
+    }
+    .btn-action-view:hover {
+      background: var(--accent);
+      color: #0b0f19;
+    }
+    .call-cell.clickable:hover, .put-cell.clickable:hover {
+      background: rgba(56, 189, 248, 0.22) !important;
+      cursor: pointer;
+    }
+
+    /* Pulse animation when navigated from contract view */
+    @keyframes pulseHighlight {
+      0% { background: rgba(56, 189, 248, 0.4); }
+      50% { background: rgba(56, 189, 248, 0.2); }
+      100% { background: transparent; }
+    }
+    .chain-table tr.highlight-pulse td {
+      animation: pulseHighlight 2.5s ease-out;
+    }
+
+    /* Charts Layout */
     .grid-charts {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -503,21 +890,22 @@ INDEX_HTML = r"""<!DOCTYPE html>
       overflow: hidden;
       font-size: 12px;
     }
-    th, td {
+    table th, table td {
       padding: 7px 10px;
       border-bottom: 1px solid #1e293b;
       text-align: right;
       white-space: nowrap;
     }
-    th {
+    table th {
       background: var(--bg-card);
       color: var(--text-muted);
       font-weight: 600;
       position: sticky;
       top: 0;
     }
-    th:first-child, td:first-child { text-align: left; }
-    tr:hover td { background: rgba(56, 189, 248, 0.05); }
+    table th:first-child, table td:first-child { text-align: left; }
+    table tr:hover td { background: rgba(56, 189, 248, 0.05); }
+
     .status-bar {
       font-size: 12px;
       color: var(--text-muted);
@@ -527,7 +915,148 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
     .hidden { display: none !important; }
 
-    /* TradingView Interaction Styling */
+    /* Searchable Symbol Combobox */
+    .symbol-combobox {
+      position: relative;
+      width: 250px;
+    }
+    .symbol-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .symbol-input-wrapper input {
+      width: 100%;
+      padding-left: 28px;
+      padding-right: 28px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .symbol-input-wrapper input:focus {
+      cursor: text;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .symbol-search-icon {
+      position: absolute;
+      left: 9px;
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .symbol-arrow-icon {
+      position: absolute;
+      right: 10px;
+      font-size: 9px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .symbol-combobox.open .symbol-arrow-icon {
+      transform: rotate(180deg);
+      color: var(--accent);
+    }
+    .symbol-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 340px;
+      max-height: 380px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75);
+      overflow-y: auto;
+      z-index: 9999;
+      display: none;
+    }
+    .symbol-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    .symbol-dropdown::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .symbol-dropdown::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    .symbol-combobox.open .symbol-dropdown {
+      display: block;
+    }
+    .symbol-dropdown-header {
+      padding: 6px 10px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid #1e293b;
+      background: rgba(15, 23, 42, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .symbol-item {
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background 0.1s;
+    }
+    .symbol-item:hover, .symbol-item.highlighted {
+      background: rgba(56, 189, 248, 0.15);
+    }
+    .symbol-item.selected {
+      background: rgba(56, 189, 248, 0.22);
+      border-left: 3px solid var(--accent);
+    }
+    .symbol-item-left {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      overflow: hidden;
+    }
+    .symbol-ticker {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 13px;
+    }
+    .symbol-name {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+    .symbol-tag {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .symbol-tag.local {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .symbol-tag.cloud {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    .symbol-no-match {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* TradingView Chart Interactions */
     .js-plotly-plot {
       user-select: none;
       -webkit-user-select: none;
@@ -540,28 +1069,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
     .js-plotly-plot .draglayer .nsewdrag:active {
       cursor: grabbing !important;
-    }
-    .tv-hint-bar {
-      margin: 0 20px 12px 20px;
-      padding: 7px 14px;
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: 6px;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .tv-hint-bar b {
-      color: var(--accent);
-    }
-    .tv-hint-bar .shortcut {
-      background: rgba(255, 255, 255, 0.08);
-      padding: 1px 5px;
-      border-radius: 4px;
-      color: var(--text-main);
-      font-family: monospace;
     }
     .chart-zoom-overlay {
       position: absolute;
@@ -601,102 +1108,270 @@ INDEX_HTML = r"""<!DOCTYPE html>
     </div>
   </header>
 
+  <!-- TOP NAVIGATION TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-btn-chain" onclick="switchTab('chain')">📅 Daily Option Chain (Snapshot by Date)</button>
+    <button class="tab-btn" id="tab-btn-lifecycle" onclick="switchTab('lifecycle')">📈 Contract Lifecycle (Deep Dive Time Series)</button>
+    <button class="tab-btn" id="tab-btn-smile" onclick="switchTab('smile')">🌐 IV Smile & Strike Cross-Section</button>
+    <button class="tab-btn" id="tab-btn-table" onclick="switchTab('table')">📋 Raw Historical Data & CSV Export</button>
+  </div>
+
+  <!-- TOOLBAR -->
   <div class="toolbar">
+    <!-- Symbol Combobox (Always visible) -->
     <div class="field">
       <label>Symbol (S&P 500)</label>
-      <select id="sel-symbol" onchange="onSymbolChange()" style="min-width:190px;"></select>
+      <div class="symbol-combobox" id="symbol-combobox">
+        <div class="symbol-input-wrapper">
+          <span class="symbol-search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="symbol-search-input" 
+            placeholder="Search ticker / company..." 
+            autocomplete="off" 
+            spellcheck="false" 
+          />
+          <span class="symbol-arrow-icon" id="symbol-arrow-icon">▼</span>
+        </div>
+        <select id="sel-symbol" onchange="onSymbolChange()" style="display:none;"></select>
+        <div class="symbol-dropdown" id="symbol-dropdown">
+          <div class="symbol-dropdown-header" id="symbol-dropdown-header">
+            <span id="symbol-count-badge">576 Symbols</span>
+            <span style="color:var(--text-muted); font-size:10px;">Type to search • ↑↓ to navigate</span>
+          </div>
+          <div id="symbol-dropdown-list"></div>
+        </div>
+      </div>
     </div>
-    <div class="field">
+
+    <!-- CONTROLS FOR TAB 1: DAILY OPTION CHAIN -->
+    <div class="field" id="fld-chain-date">
+      <label>Snapshot Trade Date</label>
+      <div style="display:flex; gap:4px; align-items:center;">
+        <button class="secondary" onclick="stepTradeDate(-1)" title="Previous Trading Day">◀</button>
+        <select id="sel-chain-date" onchange="onChainDateChange()"></select>
+        <button class="secondary" onclick="stepTradeDate(1)" title="Next Trading Day">▶</button>
+        <button class="secondary" onclick="jumpToLatestDate()" title="Jump to Latest Session">⚡ Latest</button>
+      </div>
+    </div>
+
+    <div class="field" id="fld-chain-exp">
+      <label>Expiration Date</label>
+      <select id="sel-chain-exp" onchange="onChainExpSelectChange()"></select>
+    </div>
+
+    <div class="field" id="fld-strike-range">
+      <label>Strike Filter</label>
+      <select id="sel-strike-range" onchange="filterChainStrikes()">
+        <option value="10">Near Spot (±10%)</option>
+        <option value="25" selected>Active Range (±25%)</option>
+        <option value="50">Broad (±50%)</option>
+        <option value="all">All Available Strikes</option>
+      </select>
+    </div>
+
+    <div class="field" id="fld-strike-search">
+      <label>Quick Strike</label>
+      <input type="text" id="input-strike-search" placeholder="e.g. 340" style="width:90px;" oninput="filterChainStrikes()" />
+    </div>
+
+    <!-- CONTROLS FOR TAB 2 & 4: CONTRACT LIFECYCLE & RAW TABLE -->
+    <div class="field hidden" id="fld-year">
       <label>Year Filter</label>
       <select id="sel-year" onchange="onYearChange()"></select>
     </div>
-    <div class="field" id="fld-expiration">
+    <div class="field hidden" id="fld-expiration">
       <label>Expiration Date</label>
       <select id="sel-expiration" onchange="onExpirationChange()"></select>
     </div>
-    <div class="field" id="fld-right">
+    <div class="field hidden" id="fld-right">
       <label>Option Type</label>
       <select id="sel-right" onchange="loadContractSeries()">
         <option value="call">CALL</option>
         <option value="put">PUT</option>
       </select>
     </div>
-    <div class="field" id="fld-strike">
+    <div class="field hidden" id="fld-strike">
       <label>Strike Price</label>
       <select id="sel-strike" onchange="loadContractSeries()"></select>
     </div>
-    <div class="field" id="fld-quick">
+    <div class="field hidden" id="fld-quick">
       <label>Quick Pick</label>
       <div style="display:flex; gap:5px;">
         <button class="secondary" onclick="pickATM()">ATM</button>
         <button class="secondary" onclick="pickMaxOI()">Max OI</button>
       </div>
     </div>
+
+    <!-- JUMP TO CHAIN ON DATE (Visible on Lifecycle Tab) -->
+    <div class="field hidden" id="fld-jump-chain">
+      <label>Cross-Section at Date</label>
+      <div style="display:flex; gap:4px;">
+        <select id="sel-contract-date"></select>
+        <button class="secondary" onclick="jumpFromContractToChain()" title="Inspect the full option chain across all strikes on this date">📅 View Day Chain</button>
+      </div>
+    </div>
+
+    <!-- CONTROLS FOR TAB 3: SMILE -->
     <div class="field hidden" id="fld-tradedate">
       <label>Trade Date (Snapshot)</label>
       <select id="sel-tradedate" onchange="loadChainSmile()"></select>
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tab-btn-lifecycle" onclick="switchTab('lifecycle')">📈 Contract Price & Greeks Lifecycle</button>
-    <button class="tab-btn" id="tab-btn-smile" onclick="switchTab('smile')">🌐 IV Smile & Strike Greeks Cross-Section</button>
-    <button class="tab-btn" id="tab-btn-table" onclick="switchTab('table')">📋 Raw Contract Data & CSV Export</button>
-  </div>
-
-  <div class="tv-hint-bar">
-    <span>💡 <b>TradingView Interactivity</b>: Click &amp; drag chart body to <span class="shortcut">Pan</span> • Hold <span class="shortcut">Ctrl</span> / <span class="shortcut">⌘</span> + scroll to <span class="shortcut">Zoom (Smooth)</span> • Normal scroll navigates page • Drag axes to <span class="shortcut">Stretch/Compress</span> • Double-click to <span class="shortcut">Auto-fit</span></span>
-  </div>
-
-  <!-- KPI Summary Strip -->
-  <div class="kpi-strip" id="kpi-strip">
-    <div class="kpi-card">
-      <div class="kpi-title">Contract</div>
-      <div class="kpi-value" id="kpi-contract">--</div>
-      <div class="kpi-sub" id="kpi-days">-- trading days</div>
+  <!-- CONTEXTUAL BREADCRUMB BANNER -->
+  <div id="nav-context-banner" class="nav-context-banner hidden">
+    <div class="banner-content">
+      <span class="banner-badge" id="banner-badge">Active Selection</span>
+      <span id="banner-text">Viewing AAPL 2026-09-21 $340 CALL</span>
+      <span class="banner-sub" id="banner-sub">Selected from 2026-09-15 Option Chain</span>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Latest Option Mid / Close</div>
-      <div class="kpi-value" id="kpi-price">--</div>
-      <div class="kpi-sub" id="kpi-bidask">Bid/Ask: --</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Underlying Spot</div>
-      <div class="kpi-value" id="kpi-spot">--</div>
-      <div class="kpi-sub" id="kpi-moneyness">Moneyness: --</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Implied Volatility</div>
-      <div class="kpi-value" id="kpi-iv" style="color:var(--accent-amber)">--</div>
-      <div class="kpi-sub" id="kpi-dte">DTE: --</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Delta (Δ) / Gamma (Γ)</div>
-      <div class="kpi-value" id="kpi-delta" style="color:var(--accent)">--</div>
-      <div class="kpi-sub" id="kpi-gamma">Gamma: --</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Theta (Θ) / Vega (1%)</div>
-      <div class="kpi-value" id="kpi-theta" style="color:var(--accent-red)">--</div>
-      <div class="kpi-sub" id="kpi-vega">Vega/%: --</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Open Interest / Vol</div>
-      <div class="kpi-value" id="kpi-oi" style="color:var(--accent-green)">--</div>
-      <div class="kpi-sub" id="kpi-vol">Peak Vol: --</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="btn-banner-action" id="btn-banner-action" onclick="bannerActionClick()">⬅ Back to 2026-09-15 Option Chain</button>
+      <button class="btn-banner-close" onclick="closeBanner()">✕</button>
     </div>
   </div>
 
-  <!-- TAB 1: Contract Lifecycle Charts -->
-  <div id="view-lifecycle" class="grid-charts">
-    <div class="chart-box full-width" id="chart-price" style="min-height:425px;"></div>
-    <div class="chart-box" id="chart-greeks-1"></div>
-    <div class="chart-box" id="chart-greeks-2"></div>
-    <div class="chart-box" id="chart-iv-oi"></div>
-    <div class="chart-box" id="chart-higher-greeks"></div>
+  <!-- ========================================== -->
+  <!-- TAB 1: DAILY OPTION CHAIN (SNAPSHOT VIEW) -->
+  <!-- ========================================== -->
+  <div id="view-chain">
+    <!-- Market Snapshot KPIs -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-title">Underlying Spot</div>
+        <div class="kpi-value" id="chain-kpi-spot" style="color:var(--accent)">$--</div>
+        <div class="kpi-sub" id="chain-kpi-atm">ATM Strike: $--</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Expirations Available</div>
+        <div class="kpi-value" id="chain-kpi-exps-count">--</div>
+        <div class="kpi-sub" id="chain-kpi-dte-range">DTE Range: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Active Expiration</div>
+        <div class="kpi-value" id="chain-kpi-selected-exp">--</div>
+        <div class="kpi-sub" id="chain-kpi-strikes-count">-- strikes</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Session Option Volume</div>
+        <div class="kpi-value" id="chain-kpi-vol">--</div>
+        <div class="kpi-sub" id="chain-kpi-pc-vol">P/C Volume Ratio: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Open Interest</div>
+        <div class="kpi-value" id="chain-kpi-oi" style="color:var(--accent-green)">--</div>
+        <div class="kpi-sub" id="chain-kpi-pc-oi">P/C OI Ratio: --</div>
+      </div>
+    </div>
+
+    <!-- Expirations Horizontal Carousel / Pills -->
+    <div class="chain-exp-container">
+      <div class="chain-exp-header">
+        <span>Available Expirations for <b id="chain-exp-sym-label">AAPL</b> on <b id="chain-exp-date-label">--</b> (Click to inspect strikes):</span>
+        <span style="font-size:10.5px; color:var(--text-muted)">Scroll horizontally for longer-term expirations →</span>
+      </div>
+      <div class="exp-pills-bar" id="exp-pills-bar">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Dual-Sided Option Chain Table (Calls | Strike | Puts) -->
+    <div class="chain-table-wrapper">
+      <table class="chain-table" id="chain-table">
+        <thead>
+          <tr>
+            <th colspan="7" class="th-calls">CALLS</th>
+            <th colspan="2" class="th-strike" id="th-strike-title">STRIKE & SPOT</th>
+            <th colspan="7" class="th-puts">PUTS</th>
+          </tr>
+          <tr>
+            <!-- Calls Subheaders -->
+            <th title="Click to view lifecycle">Analyze</th>
+            <th>Delta</th>
+            <th>IV (%)</th>
+            <th>Bid / Ask</th>
+            <th style="color:var(--accent)">Mid ($)</th>
+            <th>Volume</th>
+            <th>Open Int</th>
+
+            <!-- Strike Subheaders -->
+            <th style="background:#182234; color:var(--accent)">Strike</th>
+            <th style="background:#182234">% vs Spot</th>
+
+            <!-- Puts Subheaders -->
+            <th style="color:var(--accent)">Mid ($)</th>
+            <th>Bid / Ask</th>
+            <th>IV (%)</th>
+            <th>Delta</th>
+            <th>Volume</th>
+            <th>Open Int</th>
+            <th title="Click to view lifecycle">Analyze</th>
+          </tr>
+        </thead>
+        <tbody id="chain-table-body">
+          <!-- Rendered dynamically -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- TAB 2: Option Chain IV Smile & Cross-Section -->
+  <!-- ========================================== -->
+  <!-- TAB 2: CONTRACT LIFECYCLE (DEEP DIVE VIEW) -->
+  <!-- ========================================== -->
+  <div id="view-lifecycle" class="hidden">
+    <!-- Single Contract KPI Strip -->
+    <div class="kpi-strip" id="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-title">Contract</div>
+        <div class="kpi-value" id="kpi-contract">--</div>
+        <div class="kpi-sub" id="kpi-days">-- trading days</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Latest Option Mid / Close</div>
+        <div class="kpi-value" id="kpi-price">--</div>
+        <div class="kpi-sub" id="kpi-bidask">Bid/Ask: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Underlying Spot</div>
+        <div class="kpi-value" id="kpi-spot">--</div>
+        <div class="kpi-sub" id="kpi-moneyness">Moneyness: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Implied Volatility</div>
+        <div class="kpi-value" id="kpi-iv" style="color:var(--accent-amber)">--</div>
+        <div class="kpi-sub" id="kpi-dte">DTE: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Delta (Δ) / Gamma (Γ)</div>
+        <div class="kpi-value" id="kpi-delta" style="color:var(--accent)">--</div>
+        <div class="kpi-sub" id="kpi-gamma">Gamma: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Theta (Θ) / Vega (1%)</div>
+        <div class="kpi-value" id="kpi-theta" style="color:var(--accent-red)">--</div>
+        <div class="kpi-sub" id="kpi-vega">Vega/%: --</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Open Interest / Vol</div>
+        <div class="kpi-value" id="kpi-oi" style="color:var(--accent-green)">--</div>
+        <div class="kpi-sub" id="kpi-vol">Peak Vol: --</div>
+      </div>
+    </div>
+
+    <!-- Contract Lifecycle Charts -->
+    <div class="grid-charts">
+      <div class="chart-box full-width" id="chart-price" style="min-height:425px;"></div>
+      <div class="chart-box" id="chart-greeks-1"></div>
+      <div class="chart-box" id="chart-greeks-2"></div>
+      <div class="chart-box" id="chart-iv-oi"></div>
+      <div class="chart-box" id="chart-higher-greeks"></div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 3: IV SMILE & STRIKE CROSS-SECTION -->
+  <!-- ========================================== -->
   <div id="view-smile" class="grid-charts hidden">
     <div class="chart-box" id="chart-smile-iv"></div>
     <div class="chart-box" id="chart-smile-delta"></div>
@@ -704,16 +1379,18 @@ INDEX_HTML = r"""<!DOCTYPE html>
     <div class="chart-box" id="chart-smile-oi"></div>
   </div>
 
-  <!-- TAB 3: Data Table -->
+  <!-- ========================================== -->
+  <!-- TAB 4: RAW DATA TABLE & CSV EXPORT -->
+  <!-- ========================================== -->
   <div id="view-table" class="table-container hidden">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <span style="color:var(--text-muted)">Showing daily EOD + Black-Scholes Greeks records</span>
+      <span style="color:var(--text-muted)">Daily EOD + Greeks records. Click any row's <b>📅 Chain</b> to inspect that day's full market snapshot.</span>
       <button onclick="exportCSV()">⬇ Download CSV</button>
     </div>
     <table id="data-table">
       <thead>
         <tr>
-          <th>Date</th><th>DTE</th><th>Spot ($)</th><th>Bid</th><th>Ask</th><th>Mid</th><th>Close</th>
+          <th>Date</th><th>Day Chain</th><th>DTE</th><th>Spot ($)</th><th>Bid</th><th>Ask</th><th>Mid</th><th>Close</th>
           <th>Vol</th><th>Open Int</th><th>IV (%)</th><th>Delta</th><th>Gamma</th><th>Theta</th>
           <th>Vega/1%</th><th>Rho/1%</th><th>Vanna</th><th>Charm</th>
         </tr>
@@ -723,10 +1400,20 @@ INDEX_HTML = r"""<!DOCTYPE html>
   </div>
 
   <script>
-    let currentTab = 'lifecycle';
+    let currentTab = 'chain';
+    let allSymbols = [];
+    let highlightedIndex = -1;
+    let filteredSymbols = [];
+
+    // State
     let currentMeta = null;
+    let currentChainData = null;
     let currentContractsMeta = null;
     let currentSeries = [];
+
+    // Context tracking for bidirectional jumps
+    let originChainContext = null; // { symbol, tradeDate, expiration }
+    let lastContractContext = null; // { symbol, expiration, strike, right }
 
     const plotLayoutBase = {
       paper_bgcolor: '#111827',
@@ -980,7 +1667,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
       gd.addEventListener('wheel', function(e) {
         if (!gd._fullLayout) return;
 
-        // If user is just scrolling the page without modifier, show hint and allow page scroll
         if (!e.ctrlKey && !e.metaKey) {
           showZoomHint(gd);
           return;
@@ -1031,7 +1717,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const curSpan = curMax - curMin;
         if (!curSpan || isNaN(curSpan)) return;
 
-        // Smooth continuous exponential scaling based on wheel delta (handles Shift+wheel delivering deltaX on macOS)
         let rawDelta = e.deltaY;
         if (Math.abs(rawDelta) < 0.001 && Math.abs(e.deltaX) > 0.001) {
           rawDelta = e.deltaX;
@@ -1166,17 +1851,212 @@ INDEX_HTML = r"""<!DOCTYPE html>
       return await res.json();
     }
 
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ==========================================
+    // SYMBOL COMBOBOX LOGIC
+    // ==========================================
+    function updateSymbolInputDisplay(sym) {
+      const input = document.getElementById('symbol-search-input');
+      if (!input) return;
+      const item = allSymbols.find(s => s.symbol === sym);
+      if (item) {
+        const cacheTag = item.cached_count > 0 ? `[${item.cached_count}y local]` : `[☁ Cloud]`;
+        input.value = `${item.symbol} - ${item.company_name.slice(0, 20)} ${cacheTag}`;
+      } else {
+        input.value = sym;
+      }
+    }
+
+    function setupSymbolCombobox(defaultSym) {
+      const combobox = document.getElementById('symbol-combobox');
+      const input = document.getElementById('symbol-search-input');
+      const arrow = document.getElementById('symbol-arrow-icon');
+
+      updateSymbolInputDisplay(defaultSym);
+
+      function openDropdown() {
+        combobox.classList.add('open');
+        renderSymbolList(input.value.trim());
+      }
+
+      function closeDropdown() {
+        combobox.classList.remove('open');
+        highlightedIndex = -1;
+        const currentSym = document.getElementById('sel-symbol').value;
+        updateSymbolInputDisplay(currentSym);
+      }
+
+      input.addEventListener('focus', () => {
+        openDropdown();
+        input.select();
+      });
+
+      input.addEventListener('click', () => {
+        if (!combobox.classList.contains('open')) {
+          openDropdown();
+          input.select();
+        }
+      });
+
+      arrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (combobox.classList.contains('open')) {
+          closeDropdown();
+        } else {
+          openDropdown();
+          input.focus();
+          input.select();
+        }
+      });
+
+      input.addEventListener('input', () => {
+        if (!combobox.classList.contains('open')) {
+          combobox.classList.add('open');
+        }
+        highlightedIndex = 0;
+        renderSymbolList(input.value.trim());
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (!combobox.classList.contains('open')) {
+          if (e.key === 'ArrowDown' || e.key === 'Enter') {
+            openDropdown();
+            e.preventDefault();
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (filteredSymbols.length > 0) {
+            highlightedIndex = (highlightedIndex + 1) % filteredSymbols.length;
+            updateHighlight();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (filteredSymbols.length > 0) {
+            highlightedIndex = (highlightedIndex - 1 + filteredSymbols.length) % filteredSymbols.length;
+            updateHighlight();
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (highlightedIndex >= 0 && highlightedIndex < filteredSymbols.length) {
+            selectSymbol(filteredSymbols[highlightedIndex].symbol);
+          } else if (filteredSymbols.length > 0) {
+            selectSymbol(filteredSymbols[0].symbol);
+          }
+        } else if (e.key === 'Escape') {
+          closeDropdown();
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!combobox.contains(e.target)) {
+          closeDropdown();
+        }
+      });
+    }
+
+    function renderSymbolList(query) {
+      const listEl = document.getElementById('symbol-dropdown-list');
+      const badgeEl = document.getElementById('symbol-count-badge');
+      const currentSym = document.getElementById('sel-symbol').value;
+      const q = (query || '').toLowerCase().trim();
+
+      let searchQ = q;
+      if (searchQ.includes(' - ')) {
+        searchQ = searchQ.split(' - ')[0].trim();
+      }
+
+      if (!searchQ) {
+        filteredSymbols = allSymbols;
+      } else {
+        filteredSymbols = allSymbols
+          .map(item => {
+            const sym = item.symbol.toLowerCase();
+            const name = item.company_name.toLowerCase();
+            let score = 0;
+            if (sym === searchQ) score = 100;
+            else if (sym.startsWith(searchQ)) score = 80;
+            else if (sym.includes(searchQ)) score = 60;
+            else if (name.startsWith(searchQ)) score = 50;
+            else if (name.split(/\s+/).some(w => w.startsWith(searchQ))) score = 45;
+            else if (name.includes(searchQ)) score = 25;
+            return { item, score };
+          })
+          .filter(x => x.score > 0)
+          .sort((a, b) => b.score - a.score || a.item.symbol.localeCompare(b.item.symbol))
+          .map(x => x.item);
+      }
+
+      badgeEl.textContent = `${filteredSymbols.length} of ${allSymbols.length} Symbols`;
+
+      if (filteredSymbols.length === 0) {
+        listEl.innerHTML = `<div class="symbol-no-match">No symbols matching "<b>${escapeHtml(query)}</b>"</div>`;
+        return;
+      }
+
+      const visible = filteredSymbols.slice(0, 80);
+      listEl.innerHTML = visible.map((item, idx) => {
+        const isSelected = item.symbol === currentSym;
+        const isHighlighted = idx === highlightedIndex;
+        const tagClass = item.cached_count > 0 ? 'local' : 'cloud';
+        const tagText = item.cached_count > 0 ? `${item.cached_count}y local` : '☁ Cloud';
+        return `
+          <div class="symbol-item ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" 
+               data-symbol="${item.symbol}" 
+               onclick="selectSymbol('${item.symbol}')">
+            <div class="symbol-item-left">
+              <span class="symbol-ticker">${item.symbol}</span>
+              <span class="symbol-name">${escapeHtml(item.company_name)}</span>
+            </div>
+            <span class="symbol-tag ${tagClass}">${tagText}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateHighlight() {
+      const items = document.querySelectorAll('#symbol-dropdown-list .symbol-item');
+      items.forEach((el, idx) => {
+        if (idx === highlightedIndex) {
+          el.classList.add('highlighted');
+          el.scrollIntoView({ block: 'nearest' });
+        } else {
+          el.classList.remove('highlighted');
+        }
+      });
+    }
+
+    function selectSymbol(symbol) {
+      const sel = document.getElementById('sel-symbol');
+      const combobox = document.getElementById('symbol-combobox');
+      
+      sel.value = symbol;
+      updateSymbolInputDisplay(symbol);
+
+      combobox.classList.remove('open');
+      highlightedIndex = -1;
+      onSymbolChange();
+    }
+
+    // ==========================================
+    // INITIALIZATION & TAB SWITCHING
+    // ==========================================
     async function initApp() {
       setStatus('Loading universe symbols...');
       const data = await apiGet('/api/symbols');
+      allSymbols = data.symbols || [];
       const sel = document.getElementById('sel-symbol');
       sel.innerHTML = '';
       let defaultSym = 'AAPL';
-      const syms = data.symbols || [];
-      if (!syms.some(s => s.symbol === defaultSym) && syms.length > 0) {
-        defaultSym = syms[0].symbol;
+      if (!allSymbols.some(s => s.symbol === defaultSym) && allSymbols.length > 0) {
+        defaultSym = allSymbols[0].symbol;
       }
-      for (const item of syms) {
+      for (const item of allSymbols) {
         const opt = document.createElement('option');
         opt.value = item.symbol;
         const cacheTag = item.cached_count > 0 ? `[${item.cached_count}y local]` : `[☁ Cloud]`;
@@ -1184,43 +2064,501 @@ INDEX_HTML = r"""<!DOCTYPE html>
         if (item.symbol === defaultSym) opt.selected = true;
         sel.appendChild(opt);
       }
+      setupSymbolCombobox(defaultSym);
       await onSymbolChange();
     }
 
     async function onSymbolChange() {
       const sym = document.getElementById('sel-symbol').value;
       if (!sym) return;
+      updateSymbolInputDisplay(sym);
       setStatus(`Scanning Parquet metadata for ${sym}...`);
+
       try {
         const meta = await apiGet(`/api/metadata?symbol=${encodeURIComponent(sym)}`);
         currentMeta = meta;
+
+        // Populate Chain Trade Dates dropdown
+        const chainDateSel = document.getElementById('sel-chain-date');
+        chainDateSel.innerHTML = '';
+        const contractDateSel = document.getElementById('sel-contract-date');
+        contractDateSel.innerHTML = '';
+        const smileDateSel = document.getElementById('sel-tradedate');
+        smileDateSel.innerHTML = '';
+
+        const dates = meta.trade_dates || [];
+        for (let i = dates.length - 1; i >= 0; i--) {
+          const d = dates[i];
+          const o1 = document.createElement('option');
+          o1.value = d; o1.textContent = d;
+          chainDateSel.appendChild(o1);
+
+          const o2 = document.createElement('option');
+          o2.value = d; o2.textContent = d;
+          contractDateSel.appendChild(o2);
+
+          const o3 = document.createElement('option');
+          o3.value = d; o3.textContent = d;
+          smileDateSel.appendChild(o3);
+        }
+
+        // Populate Years dropdown
         const yearSel = document.getElementById('sel-year');
         yearSel.innerHTML = '';
         const years = meta.available_years || [];
         const latestYr = years.length > 0 ? years[years.length - 1] : 2026;
         for (const yr of [...years].reverse()) {
           const opt = document.createElement('option');
-          opt.value = yr;
-          opt.textContent = yr;
+          opt.value = yr; opt.textContent = yr;
           if (yr === latestYr) opt.selected = true;
           yearSel.appendChild(opt);
         }
         const allOpt = document.createElement('option');
-        allOpt.value = '';
-        allOpt.textContent = 'All Years (2016-2026)';
+        allOpt.value = ''; allOpt.textContent = 'All Years (2016-2026)';
         yearSel.appendChild(allOpt);
 
         document.getElementById('cache-badge').textContent = `${sym}: ${years.length} Yearly Parquets Cached`;
-        await onYearChange();
+
+        if (currentTab === 'chain') {
+          await loadOptionChain();
+        } else if (currentTab === 'smile') {
+          await loadChainSmile();
+        } else {
+          await onYearChange();
+        }
       } catch (e) {
         setStatus(`Error loading ${sym}: ${e.message}`);
       }
     }
 
-    async function onYearChange() {
+    function switchTab(tab) {
+      currentTab = tab;
+
+      // Update Tab Buttons
+      document.getElementById('tab-btn-chain').classList.toggle('active', tab === 'chain');
+      document.getElementById('tab-btn-lifecycle').classList.toggle('active', tab === 'lifecycle');
+      document.getElementById('tab-btn-smile').classList.toggle('active', tab === 'smile');
+      document.getElementById('tab-btn-table').classList.toggle('active', tab === 'table');
+
+      // Update View Containers
+      document.getElementById('view-chain').classList.toggle('hidden', tab !== 'chain');
+      document.getElementById('view-lifecycle').classList.toggle('hidden', tab !== 'lifecycle');
+      document.getElementById('view-smile').classList.toggle('hidden', tab !== 'smile');
+      document.getElementById('view-table').classList.toggle('hidden', tab !== 'table');
+
+      // Update Toolbar Fields Visibility
+      const isChain = (tab === 'chain');
+      const isLifecycle = (tab === 'lifecycle');
+      const isSmile = (tab === 'smile');
+      const isTable = (tab === 'table');
+
+      document.getElementById('fld-chain-date').classList.toggle('hidden', !isChain);
+      document.getElementById('fld-chain-exp').classList.toggle('hidden', !isChain);
+      document.getElementById('fld-strike-range').classList.toggle('hidden', !isChain);
+      document.getElementById('fld-strike-search').classList.toggle('hidden', !isChain);
+
+      document.getElementById('fld-year').classList.toggle('hidden', isChain || isSmile);
+      document.getElementById('fld-expiration').classList.toggle('hidden', isChain);
+      document.getElementById('fld-right').classList.toggle('hidden', isChain || isSmile);
+      document.getElementById('fld-strike').classList.toggle('hidden', isChain || isSmile);
+      document.getElementById('fld-quick').classList.toggle('hidden', isChain || isSmile);
+      document.getElementById('fld-jump-chain').classList.toggle('hidden', !isLifecycle);
+
+      document.getElementById('fld-tradedate').classList.toggle('hidden', !isSmile);
+
+      // Trigger Resize on active plots
+      requestAnimationFrame(() => {
+        const container = document.getElementById(tab === 'lifecycle' ? 'view-lifecycle' : (tab === 'smile' ? 'view-smile' : 'view-chain'));
+        if (container) {
+          container.querySelectorAll('.chart-box').forEach(box => {
+            if (box._fullLayout) {
+              Plotly.Plots.resize(box);
+            }
+          });
+        }
+      });
+
+      if (tab === 'chain') {
+        if (!currentChainData) loadOptionChain();
+      } else if (tab === 'lifecycle' || tab === 'table') {
+        if (!currentSeries.length) onYearChange();
+      } else if (tab === 'smile') {
+        loadChainSmile();
+      }
+    }
+
+    // =========================================================
+    // TAB 1: DAILY OPTION CHAIN (SNAPSHOT BY DATE) LOGIC
+    // =========================================================
+    async function loadOptionChain(requestedExp = null, targetStrike = null) {
+      const sym = document.getElementById('sel-symbol').value;
+      const date = document.getElementById('sel-chain-date').value;
+      if (!sym) return;
+
+      setStatus(`Loading daily option chain for ${sym} on ${date || 'latest date'}...`);
+      let url = `/api/chain?symbol=${encodeURIComponent(sym)}`;
+      if (date) url += `&trade_date=${encodeURIComponent(date)}`;
+      if (requestedExp) url += `&expiration=${encodeURIComponent(requestedExp)}`;
+
+      try {
+        const data = await apiGet(url);
+        currentChainData = data;
+
+        // Keep dropdown in sync
+        if (data.trade_date) {
+          document.getElementById('sel-chain-date').value = data.trade_date;
+          document.getElementById('chain-exp-date-label').textContent = data.trade_date;
+        }
+        document.getElementById('chain-exp-sym-label').textContent = sym;
+
+        // Update Snapshot KPIs
+        const spot = data.underlying_price;
+        document.getElementById('chain-kpi-spot').textContent = spot ? `$${spot.toFixed(2)}` : '--';
+        document.getElementById('th-strike-title').textContent = spot ? `STRIKE (Spot: $${spot.toFixed(2)})` : 'STRIKE & SPOT';
+
+        const exps = data.expirations || [];
+        document.getElementById('chain-kpi-exps-count').textContent = `${exps.length} Expirations`;
+        if (exps.length > 0) {
+          const dtes = exps.map(e => e.dte).filter(d => d != null);
+          const minDte = Math.min(...dtes);
+          const maxDte = Math.max(...dtes);
+          document.getElementById('chain-kpi-dte-range').textContent = `DTE: ${minDte}d to ${maxDte}d`;
+        } else {
+          document.getElementById('chain-kpi-dte-range').textContent = '--';
+        }
+
+        const selExp = data.selected_expiration || '--';
+        const selDte = data.selected_dte != null ? `${data.selected_dte}d DTE` : '';
+        document.getElementById('chain-kpi-selected-exp').textContent = `${selExp} (${selDte})`;
+        document.getElementById('chain-kpi-strikes-count').textContent = `${(data.strikes || []).length} strikes`;
+
+        const atmRow = (data.strikes || []).find(s => s.is_atm);
+        document.getElementById('chain-kpi-atm').textContent = atmRow ? `ATM Strike: $${atmRow.strike}` : 'ATM Strike: --';
+
+        const totals = data.totals || {};
+        document.getElementById('chain-kpi-vol').textContent = (totals.total_volume || 0).toLocaleString();
+        document.getElementById('chain-kpi-pc-vol').textContent = totals.put_call_volume_ratio != null
+          ? `P/C Vol: ${totals.put_call_volume_ratio.toFixed(2)} (Calls: ${(totals.call_volume || 0).toLocaleString()} • Puts: ${(totals.put_volume || 0).toLocaleString()})`
+          : 'P/C Vol: --';
+
+        document.getElementById('chain-kpi-oi').textContent = (totals.total_oi || 0).toLocaleString();
+        document.getElementById('chain-kpi-pc-oi').textContent = totals.put_call_oi_ratio != null
+          ? `P/C OI: ${totals.put_call_oi_ratio.toFixed(2)} (Calls: ${(totals.call_oi || 0).toLocaleString()} • Puts: ${(totals.put_oi || 0).toLocaleString()})`
+          : 'P/C OI: --';
+
+        // Update Chain Expiration Dropdown & Pills Bar
+        renderChainExpirations(exps, data.selected_expiration);
+
+        // Render Table Rows
+        filterChainStrikes(targetStrike);
+
+        setStatus(`Loaded option chain for ${sym} on ${data.trade_date} (${exps.length} expirations, ${(data.strikes || []).length} strikes)`);
+      } catch (e) {
+        setStatus(`Error loading chain: ${e.message}`);
+      }
+    }
+
+    function renderChainExpirations(exps, selectedExp) {
+      const selectEl = document.getElementById('sel-chain-exp');
+      selectEl.innerHTML = '';
+
+      const pillsContainer = document.getElementById('exp-pills-bar');
+      pillsContainer.innerHTML = '';
+
+      exps.forEach(e => {
+        const isSelected = e.expiration === selectedExp;
+        // Option
+        const opt = document.createElement('option');
+        opt.value = e.expiration;
+        opt.textContent = `${e.expiration} (${e.dte ?? '--'}d) - ${e.contract_count} contracts`;
+        if (isSelected) opt.selected = true;
+        selectEl.appendChild(opt);
+
+        // Pill
+        const pill = document.createElement('div');
+        pill.className = `exp-pill ${isSelected ? 'active' : ''}`;
+        pill.title = `${e.contract_count} contracts • Vol: ${(e.total_volume || 0).toLocaleString()} • OI: ${(e.total_oi || 0).toLocaleString()}`;
+        pill.innerHTML = `
+          <span>${e.expiration}</span>
+          <span class="dte-tag">${e.dte ?? '--'}d</span>
+          <span class="vol-tag">${(e.total_volume || 0) > 1000 ? Math.round(e.total_volume / 1000) + 'k v' : (e.total_volume || 0) + ' v'}</span>
+        `;
+        pill.onclick = () => selectChainExp(e.expiration);
+        pillsContainer.appendChild(pill);
+      });
+    }
+
+    function selectChainExp(expiration) {
+      document.getElementById('sel-chain-exp').value = expiration;
+      loadOptionChain(expiration);
+    }
+
+    function onChainExpSelectChange() {
+      const exp = document.getElementById('sel-chain-exp').value;
+      loadOptionChain(exp);
+    }
+
+    function onChainDateChange() {
+      loadOptionChain();
+    }
+
+    function stepTradeDate(direction) {
+      const sel = document.getElementById('sel-chain-date');
+      const idx = sel.selectedIndex;
+      // Note: options are ordered newest -> oldest (idx 0 is newest)
+      // Step -1 means previous day (older, so index + 1)
+      // Step +1 means next day (newer, so index - 1)
+      const targetIdx = idx - direction;
+      if (targetIdx >= 0 && targetIdx < sel.options.length) {
+        sel.selectedIndex = targetIdx;
+        loadOptionChain();
+      }
+    }
+
+    function jumpToLatestDate() {
+      const sel = document.getElementById('sel-chain-date');
+      if (sel.options.length > 0) {
+        sel.selectedIndex = 0;
+        loadOptionChain();
+      }
+    }
+
+    function filterChainStrikes(targetStrike = null) {
+      if (!currentChainData || !currentChainData.strikes) return;
+      const strikes = currentChainData.strikes;
+      const spot = currentChainData.underlying_price || 0;
+      const rangeVal = document.getElementById('sel-strike-range').value;
+      const searchVal = document.getElementById('input-strike-search').value.trim();
+
+      let filtered = strikes;
+
+      // Range Filter
+      if (rangeVal !== 'all' && spot > 0) {
+        const pct = parseFloat(rangeVal) / 100.0;
+        const minSt = spot * (1.0 - pct);
+        const maxSt = spot * (1.0 + pct);
+        filtered = filtered.filter(s => s.strike >= minSt && s.strike <= maxSt);
+      }
+
+      // Quick Search Filter
+      if (searchVal) {
+        const num = parseFloat(searchVal);
+        if (!isNaN(num)) {
+          filtered = filtered.filter(s => String(s.strike).includes(searchVal) || Math.abs(s.strike - num) <= 5.0);
+        }
+      }
+
+      renderChainTable(filtered, targetStrike);
+    }
+
+    function renderChainTable(strikeRows, targetStrike = null) {
+      const tbody = document.getElementById('chain-table-body');
+      tbody.innerHTML = '';
+
+      if (!strikeRows.length) {
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:24px; color:var(--text-muted);">No strikes matched the current filter. Try selecting "All Available Strikes".</td></tr>`;
+        return;
+      }
+
+      const sym = currentChainData.symbol;
+      const exp = currentChainData.selected_expiration;
+      const tradeDate = currentChainData.trade_date;
+      const spot = currentChainData.underlying_price || 0;
+
+      const fmt = (v, d = 2) => (v != null ? Number(v).toFixed(d) : '--');
+      const fmtVol = v => (v != null && v > 0 ? Number(v).toLocaleString() : '-');
+
+      for (const row of strikeRows) {
+        const st = row.strike;
+        const isATM = row.is_atm;
+        const isTarget = targetStrike !== null && Math.abs(st - targetStrike) < 1e-4;
+
+        const c = row.call;
+        const p = row.put;
+
+        const isCallITM = spot > 0 && st < spot;
+        const isPutITM = spot > 0 && st > spot;
+
+        const tr = document.createElement('tr');
+        tr.id = `chain-strike-${String(st).replace('.', '_')}`;
+        let rowClass = '';
+        if (isCallITM) rowClass += ' itm-call';
+        if (isPutITM) rowClass += ' itm-put';
+        if (isTarget) rowClass += ' highlight-pulse';
+        tr.className = rowClass.trim();
+
+        // Moneyness %
+        const moneynessText = row.moneyness_pct != null 
+          ? (row.moneyness_pct >= 0 ? `+${row.moneyness_pct}%` : `${row.moneyness_pct}%`) 
+          : '--';
+
+        tr.innerHTML = `
+          <!-- CALLS SIDE -->
+          <td style="text-align:center;">
+            <button class="btn-action-view" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" title="Analyze ${sym} ${exp} $${st} CALL Lifecycle">
+              📈 View
+            </button>
+          </td>
+          <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" style="color:var(--accent); font-weight:500;">
+            ${c ? fmt(c.delta, 2) : '--'}
+          </td>
+          <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" style="color:var(--accent-amber);">
+            ${c && c.implied_vol != null ? (c.implied_vol * 100).toFixed(1) + '%' : '--'}
+          </td>
+          <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" style="color:var(--text-muted); font-size:11px;">
+            ${c ? `$${fmt(c.bid)} / $${fmt(c.ask)}` : '--'}
+          </td>
+          <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" style="color:#fff; font-weight:700;">
+            ${c ? `$${fmt(c.mid ?? c.close)}` : '--'}
+          </td>
+          <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')">
+            ${c ? fmtVol(c.volume) : '-'}
+          </td>
+          <td class="call-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'call', '${tradeDate}')" style="border-right:1px solid #334155;">
+            ${c ? fmtVol(c.open_interest) : '-'}
+          </td>
+
+          <!-- CENTER STRIKE -->
+          <td class="td-strike ${isATM ? 'strike-atm' : ''}">
+            ${st}${isATM ? '<span class="atm-badge">ATM</span>' : ''}
+          </td>
+          <td style="background:#141e30; color:var(--text-muted); font-size:10.5px; text-align:center; border-right:1px solid #334155;">
+            ${moneynessText}
+          </td>
+
+          <!-- PUTS SIDE -->
+          <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" style="color:#fff; font-weight:700;">
+            ${p ? `$${fmt(p.mid ?? p.close)}` : '--'}
+          </td>
+          <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" style="color:var(--text-muted); font-size:11px;">
+            ${p ? `$${fmt(p.bid)} / $${fmt(p.ask)}` : '--'}
+          </td>
+          <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" style="color:var(--accent-amber);">
+            ${p && p.implied_vol != null ? (p.implied_vol * 100).toFixed(1) + '%' : '--'}
+          </td>
+          <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" style="color:var(--accent-red); font-weight:500;">
+            ${p ? fmt(p.delta, 2) : '--'}
+          </td>
+          <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')">
+            ${p ? fmtVol(p.volume) : '-'}
+          </td>
+          <td class="put-cell clickable" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')">
+            ${p ? fmtVol(p.open_interest) : '-'}
+          </td>
+          <td style="text-align:center;">
+            <button class="btn-action-view" onclick="jumpToLifecycle('${sym}', '${exp}', ${st}, 'put', '${tradeDate}')" title="Analyze ${sym} ${exp} $${st} PUT Lifecycle">
+              📈 View
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      }
+
+      if (targetStrike !== null) {
+        const targetRow = document.getElementById(`chain-strike-${String(targetStrike).replace('.', '_')}`);
+        if (targetRow) {
+          targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+
+    // =========================================================
+    // BIDIRECTIONAL NAVIGATION & JUMP FUNCTIONS
+    // =========================================================
+    async function jumpToLifecycle(symbol, expiration, strike, right, originTradeDate) {
+      originChainContext = {
+        symbol: symbol,
+        tradeDate: originTradeDate,
+        expiration: expiration
+      };
+
+      // Set banner info
+      showBanner(
+        `Viewing ${symbol} ${expiration} $${strike} ${right.toUpperCase()}`,
+        `Selected from ${originTradeDate} Option Chain Snapshot`,
+        `⬅ Back to ${originTradeDate} Option Chain`,
+        returnToChain
+      );
+
+      // Switch tab to Contract Lifecycle
+      switchTab('lifecycle');
+
+      // Update Year filter
+      const expYear = parseInt(expiration.split('-')[0], 10);
+      const yearSel = document.getElementById('sel-year');
+      if (yearSel.value !== String(expYear) && [...yearSel.options].some(o => o.value === String(expYear))) {
+        yearSel.value = expYear;
+        await onYearChange(false);
+      }
+
+      // Update Expiration
+      const expSel = document.getElementById('sel-expiration');
+      expSel.value = expiration;
+      await onExpirationChange(false);
+
+      // Update Option Type & Strike
+      document.getElementById('sel-right').value = right.toLowerCase();
+      const strikeSel = document.getElementById('sel-strike');
+      strikeSel.value = strike;
+
+      // Sync Contract Date dropdown
+      const contractDateSel = document.getElementById('sel-contract-date');
+      if (contractDateSel && originTradeDate) {
+        contractDateSel.value = originTradeDate;
+      }
+
+      await loadContractSeries();
+    }
+
+    function returnToChain() {
+      if (!originChainContext) return;
+      const { symbol, tradeDate, expiration } = originChainContext;
+      const targetStrike = document.getElementById('sel-strike').value;
+
+      document.getElementById('sel-chain-date').value = tradeDate;
+      switchTab('chain');
+      loadOptionChain(expiration, parseFloat(targetStrike));
+    }
+
+    function jumpFromContractToChain(targetDate = null) {
+      const sym = document.getElementById('sel-symbol').value;
+      const date = targetDate || document.getElementById('sel-contract-date').value;
+      const exp = document.getElementById('sel-expiration').value;
+      const strike = parseFloat(document.getElementById('sel-strike').value);
+
+      document.getElementById('sel-chain-date').value = date;
+      switchTab('chain');
+      loadOptionChain(exp, strike);
+    }
+
+    function showBanner(title, subtitle, actionText, actionFn) {
+      const banner = document.getElementById('nav-context-banner');
+      document.getElementById('banner-text').textContent = title;
+      document.getElementById('banner-sub').textContent = subtitle;
+      const actionBtn = document.getElementById('btn-banner-action');
+      actionBtn.textContent = actionText;
+      actionBtn.onclick = actionFn;
+      banner.classList.remove('hidden');
+    }
+
+    function closeBanner() {
+      document.getElementById('nav-context-banner').classList.add('hidden');
+    }
+
+    function bannerActionClick() {
+      if (originChainContext) {
+        returnToChain();
+      }
+    }
+
+    // =========================================================
+    // TAB 2: CONTRACT LIFECYCLE (TIME SERIES) LOGIC
+    // =========================================================
+    async function onYearChange(autoLoad = true) {
       const sym = document.getElementById('sel-symbol').value;
       const yr = document.getElementById('sel-year').value;
-      setStatus(`Loading expirations & dates for ${sym} ${yr || 'All'}...`);
+      setStatus(`Loading expirations for ${sym} ${yr || 'All'}...`);
       const url = `/api/metadata?symbol=${encodeURIComponent(sym)}` + (yr ? `&year=${yr}` : '');
       const meta = await apiGet(url);
       currentMeta = meta;
@@ -1228,34 +2566,24 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const expSel = document.getElementById('sel-expiration');
       expSel.innerHTML = '';
       const exps = meta.expirations || [];
-      // Default to an expiration roughly in the middle or recent
       const defaultIdx = Math.max(0, Math.min(exps.length - 1, Math.floor(exps.length * 0.7)));
       exps.forEach((ex, i) => {
         const opt = document.createElement('option');
-        opt.value = ex;
-        opt.textContent = ex;
+        opt.value = ex; opt.textContent = ex;
         if (i === defaultIdx) opt.selected = true;
         expSel.appendChild(opt);
       });
 
-      const tdSel = document.getElementById('sel-tradedate');
-      tdSel.innerHTML = '';
-      const tds = meta.trade_dates || [];
-      for (let i = tds.length - 1; i >= 0; i--) {
-        const opt = document.createElement('option');
-        opt.value = tds[i];
-        opt.textContent = tds[i];
-        tdSel.appendChild(opt);
-      }
-
-      if (currentTab === 'smile') {
-        await loadChainSmile();
-      } else {
-        await onExpirationChange();
+      if (autoLoad) {
+        if (currentTab === 'smile') {
+          await loadChainSmile();
+        } else {
+          await onExpirationChange();
+        }
       }
     }
 
-    async function onExpirationChange() {
+    async function onExpirationChange(autoLoad = true) {
       const sym = document.getElementById('sel-symbol').value;
       const yr = document.getElementById('sel-year').value;
       const exp = document.getElementById('sel-expiration').value;
@@ -1279,7 +2607,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
         if (isAtm) opt.selected = true;
         strikeSel.appendChild(opt);
       }
-      await loadContractSeries();
+
+      if (autoLoad) {
+        await loadContractSeries();
+      }
     }
 
     function pickATM() {
@@ -1475,6 +2806,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
       });
     }
 
+    // =========================================================
+    // TAB 3: IV SMILE & STRIKE CROSS-SECTION LOGIC
+    // =========================================================
     async function loadChainSmile() {
       const sym = document.getElementById('sel-symbol').value;
       const td = document.getElementById('sel-tradedate').value;
@@ -1485,15 +2819,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const url = `/api/smile?symbol=${encodeURIComponent(sym)}&trade_date=${encodeURIComponent(td)}&expiration=${encodeURIComponent(exp)}`;
       const data = await apiGet(url);
 
-      // Update expiration dropdown if needed
       const availExps = data.available_expirations || [];
       const expSel = document.getElementById('sel-expiration');
       if (availExps.length && !availExps.includes(exp)) {
         expSel.innerHTML = '';
         availExps.forEach(e => {
           const opt = document.createElement('option');
-          opt.value = e;
-          opt.textContent = e;
+          opt.value = e; opt.textContent = e;
           if (e === data.selected_expiration) opt.selected = true;
           expSel.appendChild(opt);
         });
@@ -1509,7 +2841,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         line: { color: '#f59e0b', width: 1.5, dash: 'dash' }
       }] : [];
 
-      // Smile 1: IV vs Strike
       renderPlot('chart-smile-iv', [
         {
           x: calls.map(r => r.strike),
@@ -1530,7 +2861,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         yaxis: { title: 'Implied Volatility (%)' }
       });
 
-      // Smile 2: Delta & Gamma across Strikes
       renderPlot('chart-smile-delta', [
         {
           x: calls.map(r => r.strike), y: calls.map(r => r.delta),
@@ -1552,7 +2882,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         yaxis2: { title: 'Gamma', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
       });
 
-      // Smile 3: Theta & Vega across Strikes
       renderPlot('chart-smile-gex', [
         {
           x: calls.map(r => r.strike), y: calls.map(r => r.vega_per_pct ?? r.vega),
@@ -1574,7 +2903,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
         yaxis2: { title: 'Theta ($/day)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
       });
 
-      // Smile 4: Call vs Put Open Interest Wall
       renderPlot('chart-smile-oi', [
         {
           x: calls.map(r => r.strike), y: calls.map(r => r.open_interest),
@@ -1595,6 +2923,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
       setStatus(`Loaded ${chain.length} contracts for ${sym} on ${td}`);
     }
 
+    // =========================================================
+    // TAB 4: RAW HISTORICAL DATA TABLE & CSV EXPORT
+    // =========================================================
     function renderTable(rows) {
       const tbody = document.querySelector('#data-table tbody');
       tbody.innerHTML = '';
@@ -1602,7 +2933,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const tr = document.createElement('tr');
         const fmt = (v, d = 2) => (v != null ? Number(v).toFixed(d) : '--');
         tr.innerHTML = `
-          <td>${r.trade_date}</td>
+          <td style="font-weight:600;">${r.trade_date}</td>
+          <td>
+            <button class="btn-action-view" onclick="jumpFromContractToChain('${r.trade_date}')" title="Inspect ${r.trade_date} Full Option Chain">
+              📅 Chain
+            </button>
+          </td>
           <td>${r.dte ?? '--'}</td>
           <td>$${fmt(r.underlying_price, 2)}</td>
           <td>$${fmt(r.bid, 2)}</td>
@@ -1621,39 +2957,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
           <td>${fmt(r.charm, 4)}</td>
         `;
         tbody.appendChild(tr);
-      }
-    }
-
-    function switchTab(tab) {
-      currentTab = tab;
-      document.getElementById('tab-btn-lifecycle').classList.toggle('active', tab === 'lifecycle');
-      document.getElementById('tab-btn-smile').classList.toggle('active', tab === 'smile');
-      document.getElementById('tab-btn-table').classList.toggle('active', tab === 'table');
-
-      document.getElementById('view-lifecycle').classList.toggle('hidden', tab !== 'lifecycle');
-      document.getElementById('view-smile').classList.toggle('hidden', tab !== 'smile');
-      document.getElementById('view-table').classList.toggle('hidden', tab !== 'table');
-
-      document.getElementById('fld-tradedate').classList.toggle('hidden', tab !== 'smile');
-      document.getElementById('fld-right').classList.toggle('hidden', tab === 'smile');
-      document.getElementById('fld-strike').classList.toggle('hidden', tab === 'smile');
-      document.getElementById('fld-quick').classList.toggle('hidden', tab === 'smile');
-
-      requestAnimationFrame(() => {
-        const container = document.getElementById(tab === 'lifecycle' ? 'view-lifecycle' : (tab === 'smile' ? 'view-smile' : 'view-table'));
-        if (container) {
-          container.querySelectorAll('.chart-box').forEach(box => {
-            if (box._fullLayout) {
-              Plotly.Plots.resize(box);
-            }
-          });
-        }
-      });
-
-      if (tab === 'smile') {
-        loadChainSmile();
-      } else if (tab === 'lifecycle') {
-        loadContractSeries();
       }
     }
 
@@ -1734,7 +3037,7 @@ def make_handler(backend: OptionsViewerBackend) -> type[BaseHTTPRequestHandler]:
                     self._send_json({"symbols": backend.list_symbols()})
                     return
 
-                if path in ("/api/metadata", "/api/contracts", "/api/timeseries", "/api/smile", "/api/gdrive-pull"):
+                if path in ("/api/metadata", "/api/contracts", "/api/timeseries", "/api/smile", "/api/chain", "/api/gdrive-pull"):
                     sym_raw = qs.get("symbol", ["AAPL"])[0]
                     try:
                         sym = validate_symbol(sym_raw)
@@ -1768,6 +3071,12 @@ def make_handler(backend: OptionsViewerBackend) -> type[BaseHTTPRequestHandler]:
                     td = qs.get("trade_date", [""])[0]
                     exp = qs.get("expiration", [None])[0]
                     self._send_json(backend.get_chain_smile(sym, td, expiration=exp))
+                    return
+
+                if path == "/api/chain":
+                    td = qs.get("trade_date", [None])[0]
+                    exp = qs.get("expiration", [None])[0]
+                    self._send_json(backend.get_option_chain(sym, trade_date=td, expiration=exp))
                     return
 
                 if path == "/api/gdrive-pull":
