@@ -1834,7 +1834,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
     let filteredSymbols = [];
 
     // State
-    let currentMeta = null;
     let allTradeDates = [];
     let currentChainData = null;
     let currentContractsMeta = null;
@@ -1845,7 +1844,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     let lastContractContext = null; // { symbol, expiration, strike, right }
 
     function getValidTradeDates() {
-      return (allTradeDates && allTradeDates.length) ? allTradeDates : (currentMeta && currentMeta.trade_dates ? currentMeta.trade_dates : []);
+      return (allTradeDates && allTradeDates.length) ? allTradeDates : [];
     }
 
     const plotLayoutBase = {
@@ -2857,7 +2856,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
       try {
         const meta = await apiGet(`/api/metadata?symbol=${encodeURIComponent(sym)}`);
-        currentMeta = meta;
         allTradeDates = meta.trade_dates || [];
 
         // Configure Calendar Trade Date Pickers
@@ -3344,8 +3342,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}`).then(meta => {
         if (thisToken !== lifecycleJumpToken) return;
         if (document.getElementById('sel-symbol').value !== symbol) return;
-        currentMeta = meta;
-        if (meta.trade_dates && meta.trade_dates.length) {
+        if (meta.trade_dates && meta.trade_dates.length && !allTradeDates.length) {
           allTradeDates = meta.trade_dates;
         }
         const curExp = expSel.value;
@@ -3437,12 +3434,6 @@ INDEX_HTML = r"""<!DOCTYPE html>
       setStatus(`Loading expirations for ${sym} ${yr || 'All'}...`);
       const url = `/api/metadata?symbol=${encodeURIComponent(sym)}` + (yr ? `&year=${yr}` : '');
       const meta = await apiGet(url);
-      if (!yr) {
-        currentMeta = meta;
-        if (meta.trade_dates && meta.trade_dates.length) {
-          allTradeDates = meta.trade_dates;
-        }
-      }
 
       const expSel = document.getElementById('sel-expiration');
       expSel.innerHTML = '';

@@ -1449,7 +1449,6 @@
     let filteredSymbols = [];
 
     // State
-    let currentMeta = null;
     let allTradeDates = [];
     let currentChainData = null;
     let currentContractsMeta = null;
@@ -1460,7 +1459,7 @@
     let lastContractContext = null; // { symbol, expiration, strike, right }
 
     function getValidTradeDates() {
-      return (allTradeDates && allTradeDates.length) ? allTradeDates : (currentMeta && currentMeta.trade_dates ? currentMeta.trade_dates : []);
+      return (allTradeDates && allTradeDates.length) ? allTradeDates : [];
     }
 
     const plotLayoutBase = {
@@ -2762,7 +2761,6 @@
 
       try {
         const meta = await apiGet(`/api/metadata?symbol=${encodeURIComponent(sym)}`);
-        currentMeta = meta;
         allTradeDates = meta.trade_dates || [];
 
         // Configure Calendar Trade Date Pickers
@@ -3249,8 +3247,7 @@
       apiGet(`/api/metadata?symbol=${encodeURIComponent(symbol)}`).then(meta => {
         if (thisToken !== lifecycleJumpToken) return;
         if (document.getElementById('sel-symbol').value !== symbol) return;
-        currentMeta = meta;
-        if (meta.trade_dates && meta.trade_dates.length) {
+        if (meta.trade_dates && meta.trade_dates.length && !allTradeDates.length) {
           allTradeDates = meta.trade_dates;
         }
         const curExp = expSel.value;
@@ -3342,12 +3339,6 @@
       setStatus(`Loading expirations for ${sym} ${yr || 'All'}...`);
       const url = `/api/metadata?symbol=${encodeURIComponent(sym)}` + (yr ? `&year=${yr}` : '');
       const meta = await apiGet(url);
-      if (!yr) {
-        currentMeta = meta;
-        if (meta.trade_dates && meta.trade_dates.length) {
-          allTradeDates = meta.trade_dates;
-        }
-      }
 
       const expSel = document.getElementById('sel-expiration');
       expSel.innerHTML = '';
