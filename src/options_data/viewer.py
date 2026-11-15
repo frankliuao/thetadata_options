@@ -558,6 +558,86 @@ INDEX_HTML = r"""<!DOCTYPE html>
       letter-spacing: 0.05em;
       color: var(--text-muted);
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+    }
+    .info-tooltip-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      margin-left: 5px;
+      cursor: help;
+      vertical-align: middle;
+      text-transform: none;
+      letter-spacing: normal;
+      outline: none;
+    }
+    .info-tooltip-icon {
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-weight: 700;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .info-tooltip-wrap:hover .info-tooltip-icon,
+    .info-tooltip-wrap:focus-within .info-tooltip-icon {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: var(--accent);
+      transform: scale(1.1);
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+    }
+    .info-tooltip-popover {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      width: 280px;
+      padding: 10px 12px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.5;
+      z-index: 1000;
+      pointer-events: none;
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      transform: translateY(-4px);
+      white-space: normal;
+    }
+    .info-tooltip-wrap:hover .info-tooltip-popover,
+    .info-tooltip-wrap:focus-within .info-tooltip-popover {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .info-tooltip-popover strong {
+      color: #f8fafc;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .info-tooltip-popover code {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 10.5px;
     }
     select, input {
       background: var(--bg-card);
@@ -1384,7 +1464,17 @@ INDEX_HTML = r"""<!DOCTYPE html>
   <div class="toolbar">
     <!-- Symbol Combobox (Always visible) -->
     <div class="field">
-      <label>Symbol (S&P 500)</label>
+      <label>
+        Symbol (S&P 500)
+        <span class="info-tooltip-wrap" tabindex="0" title="[xx y local]: Indicates how many years of daily options data are cached locally on your machine in Parquet format (e.g., [11y local] = 2016–2026 available offline for instant querying). [☁ Cloud] means data is not yet downloaded locally.">
+          <span class="info-tooltip-icon">ⓘ</span>
+          <span class="info-tooltip-popover">
+            <strong>What does <code>[xx y local]</code> mean?</strong><br/>
+            • <code>[xx y local]</code>: Number of calendar years of daily historical options data cached locally on disk in Apache Parquet format (e.g. <em>[11y local]</em> = 2016–2026 stored locally for instant offline queries).<br/>
+            • <code>[☁ Cloud]</code>: Symbol is in the S&amp;P 500 universe but not yet cached locally on disk. You can pull it on-demand from Google Drive backup.
+          </span>
+        </span>
+      </label>
       <div class="symbol-combobox" id="symbol-combobox">
         <div class="symbol-input-wrapper">
           <span class="symbol-search-icon">🔍</span>
@@ -2363,8 +2453,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
       if (item) {
         const cacheTag = item.cached_count > 0 ? `[${item.cached_count}y local]` : `[☁ Cloud]`;
         input.value = `${item.symbol} - ${item.company_name.slice(0, 20)} ${cacheTag}`;
+        input.title = item.cached_count > 0
+          ? `${item.symbol}: ${item.cached_count} years of historical options data cached locally on disk in Parquet format`
+          : `${item.symbol}: Not cached locally (available to pull from Google Drive)`;
       } else {
         input.value = sym;
+        input.title = sym;
       }
     }
 
@@ -2503,6 +2597,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const isHighlighted = idx === highlightedIndex;
         const tagClass = item.cached_count > 0 ? 'local' : 'cloud';
         const tagText = item.cached_count > 0 ? `${item.cached_count}y local` : '☁ Cloud';
+        const tagTitle = item.cached_count > 0
+          ? `${item.cached_count} years of historical data cached locally on disk in Parquet format`
+          : 'Not cached locally on disk (available to pull from Google Drive)';
         return `
           <div class="symbol-item ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" 
                data-symbol="${item.symbol}" 
@@ -2511,7 +2608,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
               <span class="symbol-ticker">${item.symbol}</span>
               <span class="symbol-name">${escapeHtml(item.company_name)}</span>
             </div>
-            <span class="symbol-tag ${tagClass}">${tagText}</span>
+            <span class="symbol-tag ${tagClass}" title="${tagTitle}">${tagText}</span>
           </div>
         `;
       }).join('');
