@@ -39,6 +39,9 @@ sp500_latest_prices.csv
 *.jpg
 *.jpeg
 *.avif
+!docs/images/*.png
+!docs/images/*.jpg
+!docs/images/*.jpeg
 /audit_*.py
 /build_*.py
 /prepare_*.py

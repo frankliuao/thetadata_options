@@ -203,36 +203,47 @@ poetry run options-viewer --host 0.0.0.0 --port 8050
 python scripts/run_viewer.py --port 8050
 ```
 
-Navigate to **http://127.0.0.1:8050**:
+Navigate to **http://127.0.0.1:8050** to explore the interactive visualizer:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ThetaData Options & Greeks Interactive Dashboard                           │
-│  [ Symbol: AAPL ▼ ] [ Expiration: 2024-09-20 ▼ ] [ Strike: 220 ▼ ] [ CALL ]  │
-│  [ ⚡ Select ATM ] [ 🎯 Select Max OI ]       [ ☁ Pull from Google Drive ]    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Tabs: [ 📈 Contract Lifecycle ]  [ 🌐 IV Smile / Skew ]  [ 📋 Data Table ] │
-│                                                                             │
-│  💡 TradingView Interactivity:                                              │
-│     • Click & drag chart body to Pan                                        │
-│     • Hold Ctrl / ⌘ + scroll to Zoom (Smooth)                               │
-│     • Normal scroll navigates page                                          │
-│     • Drag axes horizontally/vertically to Stretch/Compress                 │
-│     • Double-click to Auto-fit                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+#### 1. 📅 Daily Option Chain (Snapshot by Date)
+Inspect all available options across every strike and expiration for any trading day, featuring market KPIs, an expirations carousel with DTE badges, in-the-money highlighting, and dual-sided Calls/Puts with centered strikes and 1-click `[Call]` / `[Put]` deep-dive actions:
 
-#### Dashboard Features:
+![Daily Option Chain Snapshot](docs/images/daily_option_chain.png)
+
+#### 2. 📈 Contract Lifecycle View (Deep Dive Time Series)
+Track an option contract's entire multi-year lifecycle with synchronized TradingView-style charts (underlying spot vs. option Mid price & Bid/Ask envelope, 1st & 2nd order Greeks, IV, volume, and open interest):
+
+![Contract Lifecycle View](docs/images/contract_lifecycle.png)
+
+#### 3. 🌐 IV Smile, Skew & Open Interest Wall (Cross-Section)
+Inspect the cross-sectional implied volatility smile/skew, strike vs. Greek profiles, and the Call vs. Put Open Interest Wall for any expiration:
+
+![IV Smile & Greeks Cross-Section](docs/images/iv_smile.png)
+
+#### 4. 📋 Raw Historical Data & CSV Export
+Inspect point-in-time tabular records with 1-click **CSV Download** and per-row `📅 Chain` jumps:
+
+![Raw Historical Data Table](docs/images/raw_data_table.png)
+
+#### Dashboard Key Features:
+- **📅 Daily Option Chain (Snapshot by Date)**: Inspect all available options across every strike and expiration for any trading day:
+  - **Market Snapshot KPIs**: Underlying spot price, ATM reference strike, total available expirations, total day option volume, open interest, and Put/Call volume/OI ratios.
+  - **Expirations Carousel**: Quick-switch pills for all trading expirations with DTE badges (e.g. `1d`, `3d`, `6d`, `31d`, `120d`).
+  - **Dual-Sided Option Chain (Calls | Strike | Puts)**: Side-by-side terminal layout with Delta, IV, Bid, Ask, Mid, Volume, and Open Interest.
+  - **In-The-Money (ITM) Highlighting**: Clear visual distinction for ITM vs. OTM options and prominent `★ ATM` badge.
+  - **Bidirectional Navigation**: Click any Call or Put row to jump directly into the full multi-year **Contract Lifecycle** view for that exact contract, with a 1-click **⬅ Return to Chain** breadcrumb.
 - **📈 Contract Lifecycle View**: Synchronized interactive charts tracking an option over its entire lifespan:
-  - Option Price (`Mid`, `Bid`, `Ask`) vs. Underlying Spot
+  - Option Price (`Mid`, `Bid`, `Ask`) vs. Underlying Spot & Strike
   - 1st-Order Greeks: `Delta` & `Gamma`, `Theta`, `Vega` (per 1%), `Rho` (per 1%)
   - Liquidity & Volatility: `Implied Volatility`, `Volume`, and `Open Interest`
   - 2nd-Order Greeks: `Vanna`, `Charm`, `Vomma`
+  - **Jump to Date**: 1-click dropdown and data table links to view any day's full cross-sectional option chain.
 - **🌐 IV Smile & Strike Greeks Cross-Section**: Select any historical `trade_date` and `expiration` to view the cross-sectional **Implied Volatility Smile / Skew**, strike vs. Greek profiles, and the **Call vs. Put Open Interest Wall**.
-- **📋 Data Table & CSV Export**: Inspect full daily tabular records with 1-click **CSV Download**.
+- **📋 Data Table & CSV Export**: Inspect full daily tabular records with 1-click **CSV Download** and per-row `📅 Chain` jumps.
+- **🔍 Searchable Combobox**: Real-time ticker and company name search with keyboard navigation (`↑`/`↓`/`Enter`) and local cache badges.
 - **🎯 1-Click Selectors**: Instant **Select ATM** and **Select Max OI** buttons.
 - **⚡ TradingView-Style Interactivity**: Drag chart canvas to pan, drag axes to scale price or timeline, double-click to auto-fit, and hold `Ctrl` / `⌘` while scrolling for gentle, smooth zoom (normal scrolling navigates the page smoothly).
-- **☁️ Hybrid Cloud Fetch**: Click **`☁ Pull from Google Drive`** to download only the active symbol's Parquet file into your local cache on demand.
+- **☁️ Hybrid Cloud Fetch**: Click **`☁ Pull Ticker from Google Drive`** to download only the active ticker's Parquet file into your local cache on demand.
 
 ---
 
@@ -428,12 +439,24 @@ print(df)
 
 ## 🧪 Testing
 
-The test suite includes **32 offline unit tests** covering schema casting, mathematical Greek scaling, multi-threaded catch-up synchronization, error recovery, internal gap healing, dual-class symbology, and the visualization query engine without requiring ThetaData credentials:
+The test suite includes **35 offline unit tests** covering schema casting, mathematical Greek scaling, multi-threaded catch-up synchronization, error recovery, internal gap healing, dual-class symbology, and the visualization query engine without requiring ThetaData credentials:
 
 ```bash
 # Run full unit test suite:
 poetry run python -m unittest discover -s tests -v
 ```
+
+---
+
+## 🤖 Contributing & AI Agent Guidelines
+
+To maintain visual and behavioral parity across both the live application and the public demo:
+- **Dual-Surface Parity Rule**: Whenever you add or modify a feature, control, chart, or style in the core application (`src/options_data/viewer.py`), you **MUST** also synchronize the static GitHub Pages demo in `docs/` by running:
+  ```bash
+  poetry run python scripts/generate_docs_demo.py
+  ```
+- **Strict Invariant**: Never edit only `docs/index.html` without updating the core app (`src/options_data/viewer.py`), and never update `viewer.py` without regenerating `docs/`. Both surfaces must maintain 100% parity.
+- Detailed contributor and AI agent instructions are documented in [`AGENTS.md`](AGENTS.md).
 
 ---
 
