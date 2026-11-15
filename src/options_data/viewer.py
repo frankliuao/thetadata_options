@@ -1466,7 +1466,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     <div class="field">
       <label>
         Symbol (S&P 500)
-        <span class="info-tooltip-wrap" tabindex="0" title="[xx y local]: Indicates how many years of daily options data are cached locally on your machine in Parquet format (e.g., [11y local] = 2016–2026 available offline for instant querying). [☁ Cloud] means data is not yet downloaded locally.">
+        <span class="info-tooltip-wrap" tabindex="0" aria-label="Symbol local Parquet caching explanation">
           <span class="info-tooltip-icon">ⓘ</span>
           <span class="info-tooltip-popover">
             <strong>What does <code>[xx y local]</code> mean?</strong><br/>
@@ -1962,7 +1962,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const mt = gd._fullLayout.margin ? gd._fullLayout.margin.t : 84;
         const hasY2 = !!gd._fullLayout.yaxis2;
 
-        const pad = isTouch ? 25 : 8;
+        const pad = 8;
 
         if (y >= h - mb - pad && x >= ml - pad && x <= w - mr + pad) {
           return 'xaxis';
@@ -2114,6 +2114,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
           // Block buggy 2-finger pinch from resetting the chart
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
           showZoomHint(gd);
           if (touchDragCtx) touchDragCtx = null;
           return;
@@ -2127,11 +2128,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
         const axisKey = getAxisAtPoint(x, y, true);
         if (!axisKey) return; // Touch is inside main canvas -> let Plotly perform smooth 1-finger pan
 
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
         // Check for double-tap to reset this axis
         const now = Date.now();
         if (now - lastTapTime < 350 && lastTapAxis === axisKey) {
-          e.preventDefault();
-          e.stopPropagation();
           Plotly.relayout(gd, { [`${axisKey}.autorange`]: true });
           touchDragCtx = null;
           lastTapTime = 0;
@@ -2183,14 +2186,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
           startY: touch.clientY,
           identifier: touch.identifier
         };
-
-        e.preventDefault();
-      }, { passive: false });
+      }, { capture: true, passive: false });
 
       gd.addEventListener('touchmove', function(e) {
         if (e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
           return;
         }
 
@@ -2200,6 +2202,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
         const dx = touch.clientX - touchDragCtx.startX;
         const dy = touch.clientY - touchDragCtx.startY;
@@ -2234,17 +2237,20 @@ INDEX_HTML = r"""<!DOCTYPE html>
             [`${touchDragCtx.axisKey}.autorange`]: false
           });
         });
-      }, { passive: false });
+      }, { capture: true, passive: false });
 
       gd.addEventListener('touchend', function(e) {
         if (touchDragCtx) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
           if (rafId) {
             cancelAnimationFrame(rafId);
             rafId = null;
           }
           touchDragCtx = null;
         }
-      });
+      }, { capture: true, passive: false });
 
       gd.addEventListener('touchcancel', function(e) {
         if (touchDragCtx) {
@@ -2254,7 +2260,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
           }
           touchDragCtx = null;
         }
-      });
+      }, { capture: true, passive: false });
 
       gd.addEventListener('wheel', function(e) {
         if (!gd._fullLayout) return;

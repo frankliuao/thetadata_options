@@ -116,7 +116,7 @@ async def main():
         print("Waiting for Option Chain to load...")
         for _ in range(30):
             has_chain = await client.eval_js(
-                "document.querySelectorAll('#chain-table-body tr').length > 0 && !document.getElementById('status-indicator').innerText.includes('Loading')"
+                "document.querySelectorAll('#chain-table-body tr').length > 0 && !(document.getElementById('status-msg')?.innerText.includes('Loading'))"
             )
             if has_chain:
                 break
@@ -145,7 +145,7 @@ async def main():
         # Wait for Plotly chart to render
         for _ in range(30):
             has_chart = await client.eval_js(
-                "document.querySelectorAll('#view-lifecycle .plotly').length >= 3 && !document.getElementById('status-indicator').innerText.includes('Loading')"
+                "document.querySelectorAll('#view-lifecycle .plotly').length >= 3 && !(document.getElementById('status-msg')?.innerText.includes('Loading'))"
             )
             if has_chart:
                 break
@@ -162,7 +162,7 @@ async def main():
 
         for _ in range(30):
             has_smile = await client.eval_js(
-                "document.querySelectorAll('#view-smile .plotly').length >= 2 && !document.getElementById('status-indicator').innerText.includes('Loading')"
+                "document.querySelectorAll('#view-smile .plotly').length >= 2 && !(document.getElementById('status-msg')?.innerText.includes('Loading'))"
             )
             if has_smile:
                 break
@@ -179,7 +179,7 @@ async def main():
 
         for _ in range(30):
             has_table = await client.eval_js(
-                "document.querySelectorAll('#table-body tr').length > 0 && !document.getElementById('status-indicator').innerText.includes('Loading')"
+                "document.querySelectorAll('#table-body tr').length > 0 && !(document.getElementById('status-msg')?.innerText.includes('Loading'))"
             )
             if has_table:
                 break
