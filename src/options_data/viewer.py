@@ -1844,6 +1844,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
     let originChainContext = null; // { symbol, tradeDate, expiration }
     let lastContractContext = null; // { symbol, expiration, strike, right }
 
+    function getValidTradeDates() {
+      return (allTradeDates && allTradeDates.length) ? allTradeDates : (currentMeta && currentMeta.trade_dates ? currentMeta.trade_dates : []);
+    }
+
     const plotLayoutBase = {
       paper_bgcolor: '#111827',
       plot_bgcolor: '#111827',
@@ -2768,7 +2772,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
 
     function calJumpToLatest(type) {
-      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const dates = getValidTradeDates();
       if (dates.length > 0) {
         const latest = dates[dates.length - 1];
         selectTradingCalendarDate(type, latest);
@@ -2784,7 +2788,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       titleEl.textContent = `${MONTH_NAMES[month]} ${year}`;
       gridEl.innerHTML = '';
 
-      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const dates = getValidTradeDates();
       const validDates = new Set(dates);
       const input = document.getElementById(getTradingDateInputId(type));
       const curSelected = input ? input.value : '';
@@ -3072,7 +3076,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const input = document.getElementById('sel-chain-date');
       const val = input.value;
       if (!val) return;
-      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const dates = getValidTradeDates();
       if (!dates.length) return;
 
       // If user selected a non-trading date, snap to closest available trading session
@@ -3097,7 +3101,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     function stepTradeDate(direction) {
       const input = document.getElementById('sel-chain-date');
       const curDate = input.value;
-      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const dates = getValidTradeDates();
       if (!dates.length) return;
 
       let idx = dates.indexOf(curDate);
@@ -3111,7 +3115,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     }
 
     function jumpToLatestDate() {
-      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const dates = getValidTradeDates();
       if (dates.length > 0) {
         setTradingDateValue('chain', dates[dates.length - 1], false);
         loadOptionChain();
@@ -3335,6 +3339,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
         if (thisToken !== lifecycleJumpToken) return;
         if (document.getElementById('sel-symbol').value !== symbol) return;
         currentMeta = meta;
+        if (meta.trade_dates && meta.trade_dates.length) {
+          allTradeDates = meta.trade_dates;
+        }
         const curExp = expSel.value;
         expSel.innerHTML = '';
         (meta.expirations || []).forEach(ex => {
@@ -3424,7 +3431,12 @@ INDEX_HTML = r"""<!DOCTYPE html>
       setStatus(`Loading expirations for ${sym} ${yr || 'All'}...`);
       const url = `/api/metadata?symbol=${encodeURIComponent(sym)}` + (yr ? `&year=${yr}` : '');
       const meta = await apiGet(url);
-      currentMeta = meta;
+      if (!yr) {
+        currentMeta = meta;
+        if (meta.trade_dates && meta.trade_dates.length) {
+          allTradeDates = meta.trade_dates;
+        }
+      }
 
       const expSel = document.getElementById('sel-expiration');
       expSel.innerHTML = '';
@@ -3690,7 +3702,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
       const exp = document.getElementById('sel-expiration').value;
       if (!sym || !td) return;
 
-      const dates = allTradeDates.length ? allTradeDates : (currentMeta ? currentMeta.trade_dates || [] : []);
+      const dates = getValidTradeDates();
       if (dates.length && !dates.includes(td)) {
         let closest = dates[0];
         let minDiff = Math.abs(new Date(td) - new Date(closest));
