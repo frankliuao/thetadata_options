@@ -352,7 +352,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-dte",
         type=int,
         default=150,
-        help="Optional max Days-to-Expiration filter (default: 150).",
+        help="Optional max Days-to-Expiration filter (default: 150 days; preserves existing >150 contracts).",
     )
     parser.add_argument(
         "--no-open-interest",

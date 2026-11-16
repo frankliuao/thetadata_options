@@ -153,6 +153,8 @@ class DownloadConfig:
     annual_dividend_amount: float | None = None
     option_use_nbbo: bool = True
     underlyer_use_nbbo: bool = False
+    # Standard repository invariant: default max Days-to-Expiration is 150 days (~5 months).
+    # Some historical baseline files contain preserved contracts > 150 DTE, but pipeline defaults enforce 150.
     max_dte: int | None = 150
     strike_range: int | None = 50
     binomial_steps: int = 101
@@ -183,6 +185,7 @@ class ThetaOptionsDownloader:
             if config.sync_to_gdrive and config.gdrive_folder_id
             else None
         )
+        self._calendar_cache: dict[int, set[datetime.date]] = {}
         self.main_client = client or self._create_client()
 
     def _apply_rpc_timeout(self, client: ThetaClient) -> None:
@@ -264,27 +267,31 @@ class ThetaOptionsDownloader:
         client = self.main_client
 
         for year in range(start_date.year, end_date.year + 1):
-            full_close_dates: set[datetime.date] = set()
-            try:
-                cal_df = client.calendar_year(str(year))
-                if not cal_df.is_empty() and "date" in cal_df.columns:
-                    cal_df = cal_df.with_columns(
-                        date_expr("date", cal_df.schema["date"]).alias("date")
-                    )
-
-                    if "type" in cal_df.columns:
-                        closed = cal_df.filter(
-                            pl.col("type").cast(pl.Utf8).str.to_lowercase() == "full_close"
+            if year in self._calendar_cache:
+                full_close_dates = self._calendar_cache[year]
+            else:
+                full_close_dates = set()
+                try:
+                    cal_df = client.calendar_year(str(year))
+                    if not cal_df.is_empty() and "date" in cal_df.columns:
+                        cal_df = cal_df.with_columns(
+                            date_expr("date", cal_df.schema["date"]).alias("date")
                         )
-                        for d in closed["date"].to_list():
-                            if isinstance(d, datetime.date):
-                                full_close_dates.add(d)
-            except Exception as exc:
-                logger.warning(
-                    "calendar_year(%s) failed (%s); using default NYSE weekday schedule.",
-                    year,
-                    exc,
-                )
+
+                        if "type" in cal_df.columns:
+                            closed = cal_df.filter(
+                                pl.col("type").cast(pl.Utf8).str.to_lowercase() == "full_close"
+                            )
+                            for d in closed["date"].to_list():
+                                if isinstance(d, datetime.date):
+                                    full_close_dates.add(d)
+                except Exception as exc:
+                    logger.warning(
+                        "calendar_year(%s) failed (%s); using default NYSE weekday schedule.",
+                        year,
+                        exc,
+                    )
+                self._calendar_cache[year] = full_close_dates
 
             cur = max(start_date, datetime.date(year, 1, 1))
             yr_end = min(end_date, datetime.date(year, 12, 31))

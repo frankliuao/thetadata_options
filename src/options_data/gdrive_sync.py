@@ -44,8 +44,8 @@ def get_gdrive_base_cmd() -> tuple[list[str], dict[str, str]]:
 class GoogleDriveSync:
     """Uploads and updates Parquet files in Google Drive via the `gdrive` CLI."""
 
-    def __init__(self, root_folder_id: str = DEFAULT_GDRIVE_FOLDER_ID) -> None:
-        self.root_folder_id = root_folder_id
+    def __init__(self, root_folder_id: str | None = None) -> None:
+        self.root_folder_id = root_folder_id or os.getenv("GDRIVE_FOLDER_ID", DEFAULT_GDRIVE_FOLDER_ID)
         self._folder_cache: dict[tuple[str, str], str] = {}
         self._lock = threading.Lock()
 
@@ -134,6 +134,23 @@ class GoogleDriveSync:
                 m = _ID_PATTERN.search(out)
                 return m.group(1) if m else out
 
+    def get_symbol_relative_parts(self, symbol: str) -> list[str]:
+        """Resolve Google Drive folder path components for a symbol respecting Active/Removed/Delisted hierarchy."""
+        sym = symbol.upper()
+        if sym in {"KVUE", "LEG", "QRVO"}:
+            return ["options_eod", "Delisted", f"symbol={sym}"]
+
+        try:
+            from options_data.universe import load_universe_symbols
+
+            removed = set(load_universe_symbols(mode="removed_active"))
+            if sym in removed:
+                return ["options_eod", "Removed", f"symbol={sym}"]
+        except Exception:
+            pass
+
+        return ["options_eod", f"symbol={sym}"]
+
     def upload_underlying_parquet(self, local_path: Path) -> str:
         """Upload an underlying EOD Parquet file to `<root>/underlying_eod/<filename>`."""
         folder_id = self.ensure_path(["underlying_eod"])
@@ -145,13 +162,15 @@ class GoogleDriveSync:
         return file_id
 
     def upload_yearly_options_parquet(self, symbol: str, local_path: Path) -> str:
-        """Upload a consolidated yearly options Parquet file to `<root>/options_eod/symbol=<SYM>/<filename>`."""
+        """Upload a consolidated yearly options Parquet file respecting the Drive hierarchy."""
         sym = symbol.upper()
-        folder_id = self.ensure_path(["options_eod", f"symbol={sym}"])
+        parts = self.get_symbol_relative_parts(sym)
+        folder_id = self.ensure_path(parts)
         file_id = self.upload_or_update_file(local_path, folder_id)
+        display_path = "/".join(parts)
         console.print(
             f"  [bold blue]☁ Google Drive[/bold blue]: Uploaded [bold]{local_path.name}[/bold] "
-            f"-> [cyan]Options Strategy/thetadata_parquet/options_eod/symbol={sym}/[/cyan] (ID: {file_id})"
+            f"-> [cyan]{display_path}/[/cyan] (ID: {file_id})"
         )
         return file_id
 
@@ -192,7 +211,19 @@ class GoogleDriveSync:
         target_dir = Path(data_dir) / "processed" / "options_eod" / f"symbol={sym}"
         target_dir.mkdir(parents=True, exist_ok=True)
 
-        folder_id = self.find_path(["options_eod", f"symbol={sym}"])
+        # Check standard resolved path first, then fall back to other subfolders
+        resolved_parts = self.get_symbol_relative_parts(sym)
+        folder_id = self.find_path(resolved_parts)
+        if not folder_id:
+            for candidate in [
+                ["options_eod", f"symbol={sym}"],
+                ["options_eod", "Removed", f"symbol={sym}"],
+                ["options_eod", "Delisted", f"symbol={sym}"],
+            ]:
+                folder_id = self.find_path(candidate)
+                if folder_id:
+                    break
+
         if not folder_id:
             return sorted(target_dir.glob("*.parquet"))
 
