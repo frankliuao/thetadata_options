@@ -42,11 +42,11 @@ The repository bundles a curated, multi-tier universe of S&P 500 constituents un
 
 | File | Count | Description |
 | :--- | :---: | :--- |
-| **`config/sp500_universe.csv`** | **573** | **Active Universe (Default)**: 503 Current S&P 500 + 70 Removed still actively trading. |
+| **`config/sp500_universe.csv`** | **599** | **Active Universe (Default)**: 503 Current S&P 500 + 96 Removed still actively trading. |
 | **`config/sp500_active.csv`** | 503 | Current active S&P 500 index constituents. |
-| **`config/sp500_removed.csv`** | 70 | Historical constituents removed from the S&P 500 that remain actively trading. |
-| **`config/sp500_excluded.csv`** | 54 | Excluded, delisted, or acquired companies (e.g. `DAY`, `CDAY`, `TWTR`). |
-| **`config/sp500_universe_3tabs.xlsx`** | Master | Excel 3-tab workbook from which CSVs are exported. |
+| **`config/sp500_removed.csv`** | 96 | Historical constituents removed from the S&P 500 that remain actively trading. |
+
+Each CSV contains core constituent metadata: `Current Ticker`, `CIK`, `Historical Ticker (if changed)`, and `Company Name`.
 
 Use `--universe {active,current,removed_active,all}` in CLI commands to select your desired constituent universe. Pass `--include-historical-tickers` to include pre-rename tickers (e.g. `GPS`, `FBHS`, `ADS`).
 
@@ -138,7 +138,7 @@ poetry run download-options --universe active --list-universe
 | Argument | Default | Description |
 | :--- | :--- | :--- |
 | `-s, --symbols` | `None` | Explicit ticker symbols (e.g. `--symbols SPY QQQ`). Overrides `--universe`. |
-| `-u, --universe` | `active` | Universe slice: `active` (573), `current` (503), `removed_active` (70), `all` (627+). |
+| `-u, --universe` | `active` | Universe slice: `active` (599), `current` (503), `removed_active` (96), `all` (599). |
 | `--start-date` | `2016-01-01` | Inclusive start date (`YYYY-MM-DD`). |
 | `--end-date` | NYSE Today | Inclusive end date (`YYYY-MM-DD`). Defaults to current date in `America/New_York`. |
 | `--greeks-model` | `bs` | Greeks pricing model: `bs` (Black-Scholes), `binomial` (American tree), `none`. |

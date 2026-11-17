@@ -60,7 +60,7 @@ This document defines the dataset specifications, structural invariants, filteri
 ```text
 Google Drive Root / Options Strategy / thetadata_parquet /
 ├── DATA_SPECIFICATION.md           <-- This specification document
-├── sp500_universe.csv              <-- Unified universe registry (599 active + 120 excluded)
+├── sp500_universe.csv              <-- Unified universe registry (599 active: 503 current + 96 removed)
 ├── options_eod/                    <-- 503 Active S&P 500 constituents
 │   └── symbol=<SYM>/
 │       └── <SYM>_<YYYY>.parquet    <-- Yearly consolidated options data

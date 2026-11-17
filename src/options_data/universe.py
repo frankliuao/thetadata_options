@@ -1,10 +1,12 @@
-"""S&P 500 Universe loader and Google Sheet exporter."""
+"""S&P 500 Constituent Universe Management."""
 
 from __future__ import annotations
 
+import csv
 import datetime
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Literal
 
@@ -20,22 +22,18 @@ console = Console()
 # Optional Google Sheet ID for S&P 500 universe export (configured via SP500_UNIVERSE_SHEET_ID in .env)
 DEFAULT_UNIVERSE_SHEET_ID = os.getenv("SP500_UNIVERSE_SHEET_ID", "")
 DEFAULT_UNIVERSE_CSV = Path("config/sp500_universe.csv")
-DEFAULT_RAW_UNIVERSE_CSV = Path("config/sp500_universe_raw.csv")
-DEFAULT_UNIVERSE_XLSX = Path("config/sp500_universe_3tabs.xlsx")
 DEFAULT_ACTIVE_CSV = Path("config/sp500_active.csv")
 DEFAULT_REMOVED_CSV = Path("config/sp500_removed.csv")
-DEFAULT_EXCLUDED_CSV = Path("config/sp500_excluded.csv")
+DEFAULT_RAW_UNIVERSE_CSV = Path("config/sp500_universe_raw.csv")
 
-NORMALIZED_COLUMNS = [
-    "ticker",
-    "historical_ticker",
-    "company_name",
-    "sp500_status",
-    "trading_status",
-    "date_added_or_removed",
-    "notes",
-    "source_url",
+UNIVERSE_COLUMNS = [
+    "Current Ticker",
+    "CIK",
+    "Historical Ticker (if changed)",
+    "Company Name",
 ]
+NORMALIZED_COLUMNS = UNIVERSE_COLUMNS
+
 REMOVED_ACTIVE_STATUSES = ["Removed (Still Actively Trading)", "Removed from S&P 500"]
 
 UniverseFilter = Literal["active", "current", "removed_active", "all"]
@@ -73,52 +71,56 @@ def _read_xlsx_tab_rows(wb: Any, sheet_name: str) -> list[dict[str, str]]:
 
 
 def _empty_universe_df() -> pl.DataFrame:
-    return pl.DataFrame(schema={col: pl.String for col in NORMALIZED_COLUMNS})
+    return pl.DataFrame(schema={col: pl.String for col in UNIVERSE_COLUMNS})
 
 
 def export_universe_sheet_from_gdrive(
     sheet_id: str | None = None,
-    raw_csv_path: Path = DEFAULT_RAW_UNIVERSE_CSV,
+    raw_csv_path: Path | None = None,
     clean_csv_path: Path = DEFAULT_UNIVERSE_CSV,
-    excluded_csv_path: Path = DEFAULT_EXCLUDED_CSV,
-    xlsx_path: Path = DEFAULT_UNIVERSE_XLSX,
+    excluded_csv_path: Path | None = None,
+    xlsx_path: Path | None = None,
     active_csv_path: Path = DEFAULT_ACTIVE_CSV,
     removed_csv_path: Path = DEFAULT_REMOVED_CSV,
 ) -> pl.DataFrame:
-    """Export the 3-tab S&P 500 Google Sheet from Drive as XLSX and generate normalized CSVs."""
-    del raw_csv_path  # Retained in signature for backward compatibility.
+    """Export the S&P 500 Google Sheet from Drive as temporary XLSX and generate clean CSVs."""
+    del raw_csv_path, excluded_csv_path, xlsx_path  # Retained in signature for backward compatibility.
     effective_sheet_id = (sheet_id or os.getenv("SP500_UNIVERSE_SHEET_ID", "")).strip()
     if not effective_sheet_id:
         raise ValueError(
             "No Google Sheet ID provided. Specify --sheet-id or set SP500_UNIVERSE_SHEET_ID in your environment."
         )
     base_cmd, env = get_gdrive_base_cmd()
-    xlsx_path = Path(xlsx_path)
-    xlsx_path.parent.mkdir(parents=True, exist_ok=True)
 
-    cmd = base_cmd + ["readonly", "export", effective_sheet_id, str(xlsx_path), "--format", "xlsx"]
-    res = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
-    if res.returncode != 0:
-        err = (res.stderr or res.stdout).strip()
-        raise RuntimeError(f"Failed to export Google Sheet {effective_sheet_id}: {err}")
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+        temp_xlsx = Path(tmp.name)
+    try:
+        cmd = base_cmd + ["readonly", "export", effective_sheet_id, str(temp_xlsx), "--format", "xlsx"]
+        res = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
+        if res.returncode != 0:
+            err = (res.stderr or res.stdout).strip()
+            raise RuntimeError(f"Failed to export Google Sheet {effective_sheet_id}: {err}")
 
-    return clean_and_save_universe_xlsx(
-        xlsx_path=xlsx_path,
-        clean_csv_path=clean_csv_path,
-        active_csv_path=active_csv_path,
-        removed_csv_path=removed_csv_path,
-        excluded_csv_path=excluded_csv_path,
-    )
+        return clean_and_save_universe_xlsx(
+            xlsx_path=temp_xlsx,
+            clean_csv_path=clean_csv_path,
+            active_csv_path=active_csv_path,
+            removed_csv_path=removed_csv_path,
+        )
+    finally:
+        if temp_xlsx.exists():
+            temp_xlsx.unlink()
 
 
 def clean_and_save_universe_xlsx(
-    xlsx_path: Path | str = DEFAULT_UNIVERSE_XLSX,
+    xlsx_path: Path | str,
     clean_csv_path: Path | str = DEFAULT_UNIVERSE_CSV,
     active_csv_path: Path | str = DEFAULT_ACTIVE_CSV,
     removed_csv_path: Path | str = DEFAULT_REMOVED_CSV,
-    excluded_csv_path: Path | str = DEFAULT_EXCLUDED_CSV,
+    excluded_csv_path: Path | str | None = None,
 ) -> pl.DataFrame:
-    """Parse the 3-tab S&P 500 Excel workbook into normalized active, removed, and excluded CSVs."""
+    """Parse the S&P 500 Excel workbook into normalized active and removed CSVs."""
+    del excluded_csv_path  # Delisted & excluded tab is excluded per project specification.
     try:
         import openpyxl
     except ImportError:
@@ -131,82 +133,46 @@ def clean_and_save_universe_xlsx(
     clean_csv_path = Path(clean_csv_path)
     active_csv_path = Path(active_csv_path)
     removed_csv_path = Path(removed_csv_path)
-    excluded_csv_path = Path(excluded_csv_path)
 
     wb = openpyxl.load_workbook(xlsx_path, data_only=True)
 
-    tab1_records = [
-        {
-            "ticker": r.get("Current Ticker", ""),
-            "historical_ticker": r.get("Historical Ticker (if changed)") or r.get("Historical Ticker", ""),
-            "company_name": r.get("Company Name", ""),
-            "sp500_status": r.get("S&P 500 Status") or "Current S&P 500",
-            "trading_status": r.get("Current Index / Trading Status") or "S&P 500 (Active)",
-            "date_added_or_removed": r.get("Date Added", ""),
-            "notes": r.get("Notes", ""),
-            "source_url": r.get("Source URL", ""),
-        }
-        for r in _read_xlsx_tab_rows(wb, "S&P 500 Active")
-    ]
+    def _extract_tab(sheet_name: str) -> pl.DataFrame:
+        if sheet_name not in wb.sheetnames:
+            return _empty_universe_df()
+        records = []
+        for r in _read_xlsx_tab_rows(wb, sheet_name):
+            ticker = r.get("Current Ticker", "").strip().upper()
+            if not ticker:
+                continue
+            hist = (r.get("Historical Ticker (if changed)") or r.get("Historical Ticker") or "").strip().upper()
+            records.append({
+                "Current Ticker": ticker,
+                "CIK": r.get("CIK", "").strip(),
+                "Historical Ticker (if changed)": hist,
+                "Company Name": (r.get("Company Name") or "").strip(),
+            })
+        return (
+            pl.DataFrame(records).select(UNIVERSE_COLUMNS).sort("Current Ticker")
+            if records
+            else _empty_universe_df()
+        )
 
-    tab2_records = [
-        {
-            "ticker": r.get("Current Ticker", ""),
-            "historical_ticker": r.get("Historical Ticker (if changed)") or r.get("Historical Ticker", ""),
-            "company_name": r.get("Company Name", ""),
-            "sp500_status": "Removed (Still Actively Trading)",
-            "trading_status": r.get("Current Trading Status") or "Removed (Active)",
-            "date_added_or_removed": r.get("Date Removed from S&P 500", ""),
-            "notes": r.get("Reason for Removal / Notes") or r.get("Notes", ""),
-            "source_url": r.get("Source URL", ""),
-        }
-        for r in _read_xlsx_tab_rows(wb, "Removed - Still Trading")
-    ]
+    active_only_df = _extract_tab("S&P 500 Active")
+    removed_only_df = _extract_tab("Removed - Still Trading")
+    combined_active_df = pl.concat([active_only_df, removed_only_df]).sort("Current Ticker")
 
-    tab3_records = [
-        {
-            "ticker": r.get("Current Ticker (if changed)", ""),
-            "historical_ticker": r.get("Historical Ticker", ""),
-            "company_name": r.get("Company Name", ""),
-            "sp500_status": r.get("Exclusion Category / Status", ""),
-            "trading_status": r.get("Trading Status", ""),
-            "date_added_or_removed": r.get("Date Delisted / Removed", ""),
-            "notes": r.get("Reason for Removal / Notes") or r.get("Notes", ""),
-            "source_url": r.get("Source URL", ""),
-        }
-        for r in _read_xlsx_tab_rows(wb, "Delisted & Excluded")
-    ]
-
-    active_only_df = (
-        pl.DataFrame(tab1_records).select(NORMALIZED_COLUMNS).sort("ticker")
-        if tab1_records
-        else _empty_universe_df()
-    )
-    removed_only_df = (
-        pl.DataFrame(tab2_records).select(NORMALIZED_COLUMNS).sort("ticker")
-        if tab2_records
-        else _empty_universe_df()
-    )
-    combined_active_df = pl.concat([active_only_df, removed_only_df]).sort("ticker")
-    excluded_df = (
-        pl.DataFrame(tab3_records).select(NORMALIZED_COLUMNS).sort("historical_ticker")
-        if tab3_records
-        else _empty_universe_df()
-    )
-
-    for path in (clean_csv_path, active_csv_path, removed_csv_path, excluded_csv_path):
+    for path in (clean_csv_path, active_csv_path, removed_csv_path):
         path.parent.mkdir(parents=True, exist_ok=True)
 
     combined_active_df.write_csv(clean_csv_path)
     active_only_df.write_csv(active_csv_path)
     removed_only_df.write_csv(removed_csv_path)
-    excluded_df.write_csv(excluded_csv_path)
 
     console.print(
         f"[green]✓ Universe CSVs ready:[/green] {combined_active_df.height} active stocks "
         f"({active_only_df.height} current -> [bold]{active_csv_path}[/bold], "
         f"{removed_only_df.height} removed -> [bold]{removed_csv_path}[/bold]) "
-        f"-> [bold]{clean_csv_path}[/bold]; {excluded_df.height} excluded -> [bold]{excluded_csv_path}[/bold]"
+        f"-> [bold]{clean_csv_path}[/bold]"
     )
     return combined_active_df
 
@@ -214,41 +180,20 @@ def clean_and_save_universe_xlsx(
 def clean_and_save_universe_csv(
     raw_csv_path: Path | str = DEFAULT_RAW_UNIVERSE_CSV,
     clean_csv_path: Path | str = DEFAULT_UNIVERSE_CSV,
-    excluded_csv_path: Path | str = DEFAULT_EXCLUDED_CSV,
+    active_csv_path: Path | str = DEFAULT_ACTIVE_CSV,
+    removed_csv_path: Path | str = DEFAULT_REMOVED_CSV,
+    excluded_csv_path: Path | str | None = None,
 ) -> pl.DataFrame:
-    """Parse a legacy single-sheet raw exported CSV into normalized active and excluded CSV files."""
+    """Parse a legacy raw CSV into normalized active CSV files."""
+    del excluded_csv_path, active_csv_path, removed_csv_path
     raw_csv_path = Path(raw_csv_path)
     clean_csv_path = Path(clean_csv_path)
-    excluded_csv_path = Path(excluded_csv_path)
     df = pl.read_csv(raw_csv_path, ignore_errors=True)
-    df = df.rename(
-        {
-            "Current Ticker": "ticker",
-            "Historical Ticker (if changed)": "historical_ticker",
-            "Company Name": "company_name",
-            "S&P 500 Status": "sp500_status",
-            "Current Index / Trading Status": "trading_status",
-            "Date Added / Removed": "date_added_or_removed",
-            "Notes": "notes",
-            "Source URL": "source_url",
-        }
-    )
-
-    active_df = df.filter(
-        pl.col("sp500_status").is_in(["Current S&P 500", *REMOVED_ACTIVE_STATUSES])
-    ).sort("ticker")
-
-    excluded_df = df.filter(pl.col("sp500_status").str.starts_with("Excluded")).sort("ticker")
-
+    cols = [c for c in UNIVERSE_COLUMNS if c in df.columns]
+    res_df = df.select(cols)
     clean_csv_path.parent.mkdir(parents=True, exist_ok=True)
-    active_df.write_csv(clean_csv_path)
-    excluded_df.write_csv(excluded_csv_path)
-
-    console.print(
-        f"[green]✓ Universe CSV ready:[/green] {active_df.height} active stocks -> [bold]{clean_csv_path}[/bold] "
-        f"({excluded_df.height} excluded -> [bold]{excluded_csv_path}[/bold])"
-    )
-    return active_df
+    res_df.write_csv(clean_csv_path)
+    return res_df
 
 
 def load_universe_symbols(
@@ -257,63 +202,72 @@ def load_universe_symbols(
     mode: UniverseFilter = "active",
     include_historical_tickers: bool = False,
     sheet_id: str | None = None,
-    excluded_csv_path: Path | str = DEFAULT_EXCLUDED_CSV,
+    active_csv_path: Path | str = DEFAULT_ACTIVE_CSV,
+    removed_csv_path: Path | str = DEFAULT_REMOVED_CSV,
+    excluded_csv_path: Path | str | None = None,
 ) -> list[str]:
     """Load ticker symbols from the S&P 500 Universe CSV.
 
     Parameters:
     - `mode`:
-      - `'active'` (default): All 573 actively trading stocks (503 Current S&P 500 + 70 Removed but Active)
+      - `'active'` (default): All 599 actively trading stocks (503 Current S&P 500 + 96 Removed but Active)
       - `'current'`: Only the 503 Current S&P 500 constituents
-      - `'removed_active'`: Only the 70 Removed (Still Actively Trading) stocks
-      - `'all'`: All 573 active stocks + excluded/delisted stocks from `excluded_csv_path`
-    - `include_historical_tickers`: If True, also includes distinct pre-rename tickers (e.g. ADS, HFC, FBHS, GPS, WLTW).
+      - `'removed_active'`: Only the 96 Removed (Still Actively Trading) stocks
+      - `'all'`: All 599 active stocks (and optional excluded stocks if excluded_csv_path exists)
+    - `include_historical_tickers`: If True, also includes distinct pre-rename tickers (e.g. GPS, GAP, WLTW).
     """
     csv_path = Path(csv_path)
-    excluded_csv_path = Path(excluded_csv_path)
+    active_csv_path = Path(active_csv_path)
+    removed_csv_path = Path(removed_csv_path)
+
     if not csv_path.exists():
-        if DEFAULT_UNIVERSE_XLSX.exists():
-            clean_and_save_universe_xlsx(
-                xlsx_path=DEFAULT_UNIVERSE_XLSX,
-                clean_csv_path=csv_path,
-                excluded_csv_path=excluded_csv_path,
-            )
-        elif DEFAULT_RAW_UNIVERSE_CSV.exists():
+        if DEFAULT_RAW_UNIVERSE_CSV.exists():
             clean_and_save_universe_csv(
                 raw_csv_path=DEFAULT_RAW_UNIVERSE_CSV,
                 clean_csv_path=csv_path,
-                excluded_csv_path=excluded_csv_path,
             )
         else:
             export_universe_sheet_from_gdrive(
                 sheet_id=sheet_id,
                 clean_csv_path=csv_path,
-                excluded_csv_path=excluded_csv_path,
+                active_csv_path=active_csv_path,
+                removed_csv_path=removed_csv_path,
             )
 
-    df = pl.read_csv(csv_path)
+    target_path = csv_path
+    if csv_path == DEFAULT_UNIVERSE_CSV:
+        if mode == "current" and active_csv_path.exists():
+            target_path = active_csv_path
+        elif mode == "removed_active" and removed_csv_path.exists():
+            target_path = removed_csv_path
 
-    # Support both normalized ('ticker', 'sp500_status') and raw header names
-    ticker_col = "ticker" if "ticker" in df.columns else "Current Ticker"
+    df = pl.read_csv(target_path)
+
+    ticker_col = (
+        "Current Ticker"
+        if "Current Ticker" in df.columns
+        else ("ticker" if "ticker" in df.columns else df.columns[0])
+    )
     hist_col = (
-        "historical_ticker"
-        if "historical_ticker" in df.columns
+        "Historical Ticker (if changed)"
+        if "Historical Ticker (if changed)" in df.columns
         else (
-            "Historical Ticker (if changed)"
-            if "Historical Ticker (if changed)" in df.columns
+            "historical_ticker"
+            if "historical_ticker" in df.columns
             else "Historical Ticker"
         )
     )
-    status_col = "sp500_status" if "sp500_status" in df.columns else "S&P 500 Status"
 
-    if mode == "current":
-        df = df.filter(pl.col(status_col) == "Current S&P 500")
-    elif mode == "removed_active":
-        df = df.filter(pl.col(status_col).is_in(REMOVED_ACTIVE_STATUSES))
-    elif mode == "active":
-        df = df.filter(
-            pl.col(status_col).is_in(["Current S&P 500", *REMOVED_ACTIVE_STATUSES])
-        )
+    if "sp500_status" in df.columns or "S&P 500 Status" in df.columns:
+        status_col = "sp500_status" if "sp500_status" in df.columns else "S&P 500 Status"
+        if mode == "current":
+            df = df.filter(pl.col(status_col) == "Current S&P 500")
+        elif mode == "removed_active":
+            df = df.filter(pl.col(status_col).is_in(REMOVED_ACTIVE_STATUSES))
+        elif mode == "active":
+            df = df.filter(
+                pl.col(status_col).is_in(["Current S&P 500", *REMOVED_ACTIVE_STATUSES])
+            )
 
     symbols: list[str] = []
     seen: set[str] = set()
@@ -329,25 +283,17 @@ def load_universe_symbols(
                 seen.add(ht)
                 symbols.append(ht)
 
-    if mode == "all" and excluded_csv_path.exists():
+    if mode == "all" and excluded_csv_path and Path(excluded_csv_path).exists():
         ex_df = pl.read_csv(excluded_csv_path)
         ex_ticker_col = (
-            "ticker"
-            if "ticker" in ex_df.columns
-            else (
-                "Current Ticker (if changed)"
-                if "Current Ticker (if changed)" in ex_df.columns
-                else "Current Ticker"
-            )
+            "Current Ticker"
+            if "Current Ticker" in ex_df.columns
+            else ("ticker" if "ticker" in ex_df.columns else "Historical Ticker")
         )
         ex_hist_col = (
-            "historical_ticker"
-            if "historical_ticker" in ex_df.columns
-            else (
-                "Historical Ticker"
-                if "Historical Ticker" in ex_df.columns
-                else "Historical Ticker (if changed)"
-            )
+            "Historical Ticker (if changed)"
+            if "Historical Ticker (if changed)" in ex_df.columns
+            else ("historical_ticker" if "historical_ticker" in ex_df.columns else "Historical Ticker")
         )
         for row in ex_df.iter_rows(named=True):
             t = (row.get(ex_ticker_col) or "").strip().upper()

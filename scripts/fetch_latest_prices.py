@@ -25,11 +25,12 @@ def main():
     with open(csv_input, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            sym = row.get("ticker", "").strip().upper()
+            sym = (row.get("Current Ticker") or row.get("ticker", "")).strip().upper()
             if sym:
                 tickers.append(sym)
                 universe_meta[sym] = {
-                    "company_name": row.get("company_name", ""),
+                    "company_name": row.get("Company Name") or row.get("company_name", ""),
+                    "cik": row.get("CIK", ""),
                     "trading_status": row.get("trading_status") or row.get("gics_sector", ""),
                     "sp500_status": row.get("sp500_status", ""),
                 }

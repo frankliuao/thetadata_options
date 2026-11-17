@@ -92,13 +92,13 @@ class OptionsViewerBackend:
             try:
                 udf = pl.read_csv(self.universe_csv, ignore_errors=True)
                 for rec in udf.to_dicts():
-                    sym = str(rec.get("ticker", "")).strip().upper()
+                    sym = str(rec.get("Current Ticker") or rec.get("ticker", "")).strip().upper()
                     if not sym:
                         continue
                     years = local_info.get(sym, [])
                     records_map[sym] = {
                         "symbol": sym,
-                        "company_name": str(rec.get("company_name") or sym),
+                        "company_name": str(rec.get("Company Name") or rec.get("company_name") or sym),
                         "cached_years": years,
                         "cached_count": len(years),
                     }

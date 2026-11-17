@@ -53,10 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
         default="active",
         help=(
             "S&P 500 Universe filter when --symbols is not provided: "
-            "'active' (573 stocks: 503 Current + 70 Removed but Active, default), "
+            "'active' (599 stocks: 503 Current + 96 Removed but Active, default), "
             "'current' (503 Current S&P 500 only), "
-            "'removed_active' (70 Removed but Active only), "
-            "'all' (573 Active + 54 Excluded/Delisted)."
+            "'removed_active' (96 Removed but Active only), "
+            "'all' (alias for active 599 stocks)."
         ),
     )
     parser.add_argument(
