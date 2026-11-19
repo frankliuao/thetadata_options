@@ -9,6 +9,7 @@ from unittest import mock
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import grpc
 import polars as pl
 
 from options_data.cli import main as download_main
@@ -173,6 +174,29 @@ class SymbolAndCalendarTests(unittest.TestCase):
         self.assertEqual(len(all_default), 599)
         for symbol in everything:
             validate_symbol(symbol)
+
+    def test_clean_and_save_universe_xlsx_validates_tabs_and_prevents_overwrite(self) -> None:
+        import tempfile
+        import openpyxl
+        from options_data.universe import clean_and_save_universe_xlsx
+
+        # Missing expected sheets
+        wb_empty = openpyxl.Workbook()
+        with tempfile.NamedTemporaryFile(suffix=".xlsx") as f:
+            wb_empty.save(f.name)
+            with self.assertRaises(ValueError) as ctx:
+                clean_and_save_universe_xlsx(f.name)
+            self.assertIn("Expected worksheet(s)", str(ctx.exception))
+
+        # Expected sheets present but empty
+        wb_bad = openpyxl.Workbook()
+        wb_bad.create_sheet("S&P 500 Active")
+        wb_bad.create_sheet("Removed - Still Trading")
+        with tempfile.NamedTemporaryFile(suffix=".xlsx") as f:
+            wb_bad.save(f.name)
+            with self.assertRaises(ValueError) as ctx:
+                clean_and_save_universe_xlsx(f.name)
+            self.assertIn("empty", str(ctx.exception))
 
     def test_nyse_today_is_the_new_york_session_date(self) -> None:
         session = nyse_today()
@@ -929,6 +953,152 @@ class MockCliTests(unittest.TestCase):
         self.assertTrue(cfg.skip_existing)
         self.assertTrue(cfg.consolidate_yearly)
         self.assertTrue(cfg.sync_to_gdrive)
+
+    @staticmethod
+    def _make_current_day_rpc_error() -> grpc.RpcError:
+        class FakeCurrentDayRpcError(grpc.RpcError):
+            def code(self) -> grpc.StatusCode:
+                return grpc.StatusCode.INVALID_ARGUMENT
+
+            def details(self) -> str:
+                return "Cannot fetch current-day data without specifying an expiration"
+
+        return FakeCurrentDayRpcError()
+
+    @staticmethod
+    def _make_fake_datetime(now_et: datetime.datetime) -> type[datetime.datetime]:
+        class FakeDateTime(datetime.datetime):
+            @classmethod
+            def now(cls, tz: datetime.tzinfo | None = None) -> datetime.datetime:
+                if tz is not None:
+                    return now_et.astimezone(tz)
+                return now_et.replace(tzinfo=None)
+
+        return FakeDateTime
+
+    def test_current_day_wildcard_before_close_raises_not_ready(self) -> None:
+        """Wildcard current-day rejection before 17:30 ET must return not_ready without per-expiration fallback."""
+        trade_date = datetime.date(2026, 11, 18)
+        now_et = datetime.datetime(2026, 11, 18, 14, 0, tzinfo=ZoneInfo("America/New_York"))
+        rpc_err = self._make_current_day_rpc_error()
+
+        mock_client = mock.MagicMock()
+        mock_client.option_history_greeks_eod.side_effect = rpc_err
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = DownloadConfig(
+                symbols=["SPY"],
+                data_dir=Path(tmp),
+                sync_to_gdrive=False,
+                max_dte=150,
+            )
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+            with (
+                mock.patch.object(dl, "_get_thread_client", return_value=mock_client),
+                mock.patch("datetime.datetime", self._make_fake_datetime(now_et)),
+            ):
+                res_date, rows, status = dl.download_day("SPY", trade_date)
+
+            self.assertEqual(res_date, trade_date)
+            self.assertEqual(rows, 0)
+            self.assertEqual(status, "not_ready")
+            mock_client.option_list_expirations.assert_not_called()
+
+    def test_current_day_wildcard_after_close_falls_back_to_per_expiration(self) -> None:
+        """After 17:30 ET, wildcard current-day rejection must fall back to per-expiration Greeks + OI within max_dte."""
+        trade_date = datetime.date(2026, 11, 18)
+        now_et = datetime.datetime(2026, 11, 18, 18, 0, tzinfo=ZoneInfo("America/New_York"))
+        exp1 = datetime.date(2026, 12, 18)   # 30 DTE (included)
+        exp2 = datetime.date(2027, 1, 15)    # 58 DTE (included)
+        exp_far = datetime.date(2027, 6, 18) # 212 DTE (> 150 DTE, excluded)
+        rpc_err = self._make_current_day_rpc_error()
+
+        mock_client = mock.MagicMock()
+        mock_client.option_list_expirations.return_value = pl.DataFrame(
+            {"expiration": [exp1.isoformat(), exp2.isoformat(), exp_far.isoformat()]}
+        )
+
+        greeks_calls: list[tuple[object, bool]] = []
+
+        def fake_greeks_eod(**kwargs):
+            exp_arg = kwargs["expiration"]
+            greeks_calls.append((exp_arg, "max_dte" in kwargs))
+            if exp_arg == "*":
+                raise rpc_err
+            return pl.DataFrame({
+                "symbol": ["SPY"],
+                "expiration": [exp_arg.isoformat()],
+                "strike": [500.0 if exp_arg == exp1 else 510.0],
+                "right": ["CALL"],
+                "bid": [10.0],
+                "ask": [10.4],
+                "close": [10.2],
+                "vega": [2.5],
+                "rho": [0.4],
+                "delta": [0.55],
+                "implied_vol": [0.16],
+                "underlying_price": [505.0],
+            })
+
+        oi_calls: list[tuple[object, bool]] = []
+
+        def fake_oi(**kwargs):
+            exp_arg = kwargs["expiration"]
+            oi_calls.append((exp_arg, "max_dte" in kwargs))
+            return pl.DataFrame({
+                "symbol": ["SPY"],
+                "expiration": [exp_arg.isoformat()],
+                "strike": [500.0 if exp_arg == exp1 else 510.0],
+                "right": ["CALL"],
+                "open_interest": [1200 if exp_arg == exp1 else 800],
+            })
+
+        mock_client.option_history_greeks_eod.side_effect = fake_greeks_eod
+        mock_client.option_history_open_interest.side_effect = fake_oi
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = DownloadConfig(
+                symbols=["SPY"],
+                data_dir=Path(tmp),
+                sync_to_gdrive=False,
+                max_dte=150,
+            )
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+            with (
+                mock.patch.object(dl, "_get_thread_client", return_value=mock_client),
+                mock.patch("datetime.datetime", self._make_fake_datetime(now_et)),
+            ):
+                res_date, rows, status = dl.download_day("SPY", trade_date)
+
+            self.assertEqual(res_date, trade_date)
+            self.assertEqual(status, "saved")
+            self.assertEqual(rows, 2)
+            self.assertEqual(greeks_calls, [("*", True), (exp1, False), (exp2, False)])
+            self.assertEqual(oi_calls, [(exp1, False), (exp2, False)])
+
+            saved = pl.read_parquet(dl.daily_parquet_path("SPY", trade_date))
+            self.assertEqual(saved["expiration"].to_list(), [exp1, exp2])
+            self.assertEqual(saved["dte"].to_list(), [30, 58])
+            self.assertEqual(saved["open_interest_prior_close"].to_list(), [1200, 800])
+            self.assertAlmostEqual(saved["mid"][0], 10.2)
+            self.assertAlmostEqual(saved["vega_per_pct"][0], 0.025)
+
+    def test_gdrive_ensure_subfolder_caches_all_siblings(self) -> None:
+        """ensure_subfolder caches every sibling folder returned by list_children."""
+        from options_data.gdrive_sync import FOLDER_MIME_TYPE, GoogleDriveSync
+
+        sync = GoogleDriveSync(root_folder_id="root_id")
+        mock_children = [
+            {"id": "fid_aapl", "name": "symbol=AAPL", "mimeType": FOLDER_MIME_TYPE},
+            {"id": "fid_msft", "name": "symbol=MSFT", "mimeType": FOLDER_MIME_TYPE},
+        ]
+        with mock.patch.object(sync, "list_children", return_value=mock_children) as m_list:
+            id1 = sync.ensure_subfolder("root_id", "symbol=AAPL")
+            id2 = sync.ensure_subfolder("root_id", "symbol=MSFT")
+
+        self.assertEqual(id1, "fid_aapl")
+        self.assertEqual(id2, "fid_msft")
+        m_list.assert_called_once_with("root_id")
 
 
 if __name__ == "__main__":

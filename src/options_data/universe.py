@@ -136,9 +136,15 @@ def clean_and_save_universe_xlsx(
 
     wb = openpyxl.load_workbook(xlsx_path, data_only=True)
 
+    required_sheets = ["S&P 500 Active", "Removed - Still Trading"]
+    missing_sheets = [s for s in required_sheets if s not in wb.sheetnames]
+    if missing_sheets:
+        raise ValueError(
+            f"Expected worksheet(s) {missing_sheets} in workbook; found {wb.sheetnames}. "
+            "Aborting refresh to prevent overwriting universe with empty data."
+        )
+
     def _extract_tab(sheet_name: str) -> pl.DataFrame:
-        if sheet_name not in wb.sheetnames:
-            return _empty_universe_df()
         records = []
         for r in _read_xlsx_tab_rows(wb, sheet_name):
             ticker = r.get("Current Ticker", "").strip().upper()
@@ -159,6 +165,12 @@ def clean_and_save_universe_xlsx(
 
     active_only_df = _extract_tab("S&P 500 Active")
     removed_only_df = _extract_tab("Removed - Still Trading")
+
+    if active_only_df.is_empty():
+        raise ValueError("Parsed 'S&P 500 Active' tab is empty; aborting overwrite to prevent data loss.")
+    if removed_only_df.is_empty():
+        raise ValueError("Parsed 'Removed - Still Trading' tab is empty; aborting overwrite to prevent data loss.")
+
     combined_active_df = pl.concat([active_only_df, removed_only_df]).sort("Current Ticker")
 
     for path in (clean_csv_path, active_csv_path, removed_csv_path):

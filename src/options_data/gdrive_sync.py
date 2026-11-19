@@ -47,6 +47,7 @@ class GoogleDriveSync:
     def __init__(self, root_folder_id: str | None = None) -> None:
         self.root_folder_id = root_folder_id or os.getenv("GDRIVE_FOLDER_ID", DEFAULT_GDRIVE_FOLDER_ID)
         self._folder_cache: dict[tuple[str, str], str] = {}
+        self._removed_symbols: set[str] | None = None
         self._lock = threading.Lock()
 
     def _run(self, args: list[str]) -> str:
@@ -67,6 +68,16 @@ class GoogleDriveSync:
         data = json.loads(out)
         return data if isinstance(data, list) else []
 
+    def _cache_child_folders(self, parent_id: str) -> None:
+        """Populate `_folder_cache` with all direct subfolders returned by `list_children(parent_id)`."""
+        for item in self.list_children(parent_id):
+            if (
+                item.get("mimeType") == FOLDER_MIME_TYPE
+                and item.get("name")
+                and item.get("id")
+            ):
+                self._folder_cache[(parent_id, item["name"])] = item["id"]
+
     def ensure_subfolder(self, parent_id: str, name: str) -> str:
         """Find or create a subfolder named `name` inside `parent_id` and return its folder ID."""
         with self._lock:
@@ -74,11 +85,9 @@ class GoogleDriveSync:
             if cache_key in self._folder_cache:
                 return self._folder_cache[cache_key]
 
-            for item in self.list_children(parent_id):
-                if item.get("name") == name and item.get("mimeType") == FOLDER_MIME_TYPE:
-                    folder_id = item["id"]
-                    self._folder_cache[cache_key] = folder_id
-                    return folder_id
+            self._cache_child_folders(parent_id)
+            if cache_key in self._folder_cache:
+                return self._folder_cache[cache_key]
 
             out = self._run(["mutate", "mkdir", name, "--parent", parent_id])
             m = _ID_PATTERN.search(out)
@@ -88,11 +97,9 @@ class GoogleDriveSync:
                 return folder_id
 
             # Fallback: re-list parent folder
-            for item in self.list_children(parent_id):
-                if item.get("name") == name and item.get("mimeType") == FOLDER_MIME_TYPE:
-                    folder_id = item["id"]
-                    self._folder_cache[cache_key] = folder_id
-                    return folder_id
+            self._cache_child_folders(parent_id)
+            if cache_key in self._folder_cache:
+                return self._folder_cache[cache_key]
 
             raise RuntimeError(f"Failed to resolve folder ID after creating subfolder '{name}' in {parent_id}")
 
@@ -140,14 +147,21 @@ class GoogleDriveSync:
         if sym in {"KVUE", "LEG", "QRVO"}:
             return ["options_eod", "Delisted", f"symbol={sym}"]
 
-        try:
-            from options_data.universe import load_universe_symbols
+        removed = self._removed_symbols
+        if removed is None:
+            with self._lock:
+                removed = self._removed_symbols
+                if removed is None:
+                    try:
+                        from options_data.universe import load_universe_symbols
 
-            removed = set(load_universe_symbols(mode="removed_active"))
-            if sym in removed:
-                return ["options_eod", "Removed", f"symbol={sym}"]
-        except Exception:
-            pass
+                        removed = set(load_universe_symbols(mode="removed_active"))
+                        self._removed_symbols = removed
+                    except Exception:
+                        removed = set()
+
+        if sym in removed:
+            return ["options_eod", "Removed", f"symbol={sym}"]
 
         return ["options_eod", f"symbol={sym}"]
 
@@ -181,12 +195,8 @@ class GoogleDriveSync:
             if cache_key in self._folder_cache:
                 return self._folder_cache[cache_key]
 
-            for item in self.list_children(parent_id):
-                if item.get("name") == name and item.get("mimeType") == FOLDER_MIME_TYPE:
-                    folder_id = item["id"]
-                    self._folder_cache[cache_key] = folder_id
-                    return folder_id
-            return None
+            self._cache_child_folders(parent_id)
+            return self._folder_cache.get(cache_key)
 
     def find_path(self, relative_parts: list[str], base_folder_id: str | None = None) -> str | None:
         """Resolve an existing nested folder path in Drive without creating folders (readonly)."""
