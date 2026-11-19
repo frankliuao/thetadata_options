@@ -152,13 +152,10 @@ class GoogleDriveSync:
             with self._lock:
                 removed = self._removed_symbols
                 if removed is None:
-                    try:
-                        from options_data.universe import load_universe_symbols
+                    from options_data.universe import load_universe_symbols
 
-                        removed = set(load_universe_symbols(mode="removed_active"))
-                        self._removed_symbols = removed
-                    except Exception:
-                        removed = set()
+                    self._removed_symbols = set(load_universe_symbols(mode="removed_active"))
+                    removed = self._removed_symbols
 
         if sym in removed:
             return ["options_eod", "Removed", f"symbol={sym}"]

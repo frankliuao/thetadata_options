@@ -289,13 +289,13 @@ class ThetaOptionsDownloader:
                             for d in closed["date"].to_list():
                                 if isinstance(d, datetime.date):
                                     full_close_dates.add(d)
+                    self._calendar_cache[year] = full_close_dates
                 except Exception as exc:
                     logger.warning(
                         "calendar_year(%s) failed (%s); using default NYSE weekday schedule.",
                         year,
                         exc,
                     )
-                self._calendar_cache[year] = full_close_dates
 
             cur = max(start_date, datetime.date(year, 1, 1))
             yr_end = min(end_date, datetime.date(year, 12, 31))

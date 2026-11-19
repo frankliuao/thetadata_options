@@ -1215,6 +1215,43 @@ class MockCliTests(unittest.TestCase):
         self.assertEqual(id2, "fid_msft")
         m_list.assert_called_once_with("root_id")
 
+    def test_gdrive_get_symbol_relative_parts_raises_on_universe_load_failure(self) -> None:
+        """get_symbol_relative_parts must raise on universe load failure rather than misrouting removed symbols."""
+        from options_data.gdrive_sync import GoogleDriveSync
+
+        sync = GoogleDriveSync(root_folder_id="root_id")
+        with mock.patch("options_data.universe.load_universe_symbols", side_effect=RuntimeError("disk failure")):
+            with self.assertRaises(RuntimeError):
+                sync.get_symbol_relative_parts("ATVI")
+
+    def test_failed_calendar_is_not_cached_as_empty_holidays(self) -> None:
+        """A failed calendar_year call must not be cached, allowing subsequent calls to retry and fetch holidays."""
+        from options_data.downloader import DownloadConfig, ThetaOptionsDownloader
+
+        mock_client = mock.MagicMock()
+        mock_client.calendar_year.side_effect = RuntimeError("transient network error")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = DownloadConfig(symbols=["SPY"], data_dir=Path(tmp), sync_to_gdrive=False)
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+
+            # First attempt fails: should return weekdays and NOT cache
+            days1 = dl.get_trading_days(datetime.date(2024, 1, 1), datetime.date(2024, 1, 5))
+            self.assertNotIn(2024, dl._calendar_cache)
+            self.assertIn(datetime.date(2024, 1, 1), days1)  # Mon Jan 1 was included because cal failed
+
+            # Now calendar succeeds with Jan 1 as full_close
+            cal_df = pl.DataFrame({
+                "date": ["2024-01-01"],
+                "type": ["full_close"],
+            })
+            mock_client.calendar_year.side_effect = None
+            mock_client.calendar_year.return_value = cal_df
+
+            days2 = dl.get_trading_days(datetime.date(2024, 1, 1), datetime.date(2024, 1, 5))
+            self.assertIn(2024, dl._calendar_cache)
+            self.assertNotIn(datetime.date(2024, 1, 1), days2)  # Jan 1 properly excluded as holiday
+
 
 if __name__ == "__main__":
     unittest.main()
