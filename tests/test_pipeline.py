@@ -176,26 +176,30 @@ class SymbolAndCalendarTests(unittest.TestCase):
             validate_symbol(symbol)
 
     def test_clean_and_save_universe_xlsx_validates_tabs_and_prevents_overwrite(self) -> None:
-        import tempfile
-        import openpyxl
         from options_data.universe import clean_and_save_universe_xlsx
 
-        # Missing expected sheets
-        wb_empty = openpyxl.Workbook()
-        with tempfile.NamedTemporaryFile(suffix=".xlsx") as f:
-            wb_empty.save(f.name)
+        mock_wb_empty = mock.MagicMock()
+        mock_wb_empty.sheetnames = ["Sheet1"]
+
+        mock_openpyxl = mock.MagicMock()
+        mock_openpyxl.load_workbook.return_value = mock_wb_empty
+
+        with mock.patch.dict("sys.modules", {"openpyxl": mock_openpyxl}):
+            # Missing expected sheets
             with self.assertRaises(ValueError) as ctx:
-                clean_and_save_universe_xlsx(f.name)
+                clean_and_save_universe_xlsx("dummy.xlsx")
             self.assertIn("Expected worksheet(s)", str(ctx.exception))
 
-        # Expected sheets present but empty
-        wb_bad = openpyxl.Workbook()
-        wb_bad.create_sheet("S&P 500 Active")
-        wb_bad.create_sheet("Removed - Still Trading")
-        with tempfile.NamedTemporaryFile(suffix=".xlsx") as f:
-            wb_bad.save(f.name)
+            # Expected sheets present but empty
+            mock_wb_bad = mock.MagicMock()
+            mock_wb_bad.sheetnames = ["S&P 500 Active", "Removed - Still Trading"]
+            mock_ws = mock.MagicMock()
+            mock_ws.iter_rows.return_value = []
+            mock_wb_bad.__getitem__.return_value = mock_ws
+            mock_openpyxl.load_workbook.return_value = mock_wb_bad
+
             with self.assertRaises(ValueError) as ctx:
-                clean_and_save_universe_xlsx(f.name)
+                clean_and_save_universe_xlsx("dummy.xlsx")
             self.assertIn("empty", str(ctx.exception))
 
     def test_nyse_today_is_the_new_york_session_date(self) -> None:
