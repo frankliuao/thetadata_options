@@ -345,12 +345,12 @@ class ThetaOptionsDownloader:
         *,
         wildcard: bool,
     ) -> None:
-        """Handle gRPC errors for options EOD/Greeks RPCs before retrying or falling back."""
+        """Handle gRPC errors for options EOD/Greeks/OI RPCs before retrying or falling back."""
         if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
             self._reauthenticate(force=True)
             raise rpc_err
         details = str(rpc_err.details() if hasattr(rpc_err, "details") else rpc_err)
-        if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in details:
+        if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in details.lower():
             if wildcard:
                 raise _CurrentDayWildcardNotSupported(details) from rpc_err
             raise CurrentDayNotReadyError(
@@ -485,14 +485,7 @@ class ThetaOptionsDownloader:
         except NoDataFoundError:
             pass
         except grpc.RpcError as rpc_err:
-            if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
-                self._reauthenticate(force=True)
-            details = str(rpc_err.details() if hasattr(rpc_err, "details") else rpc_err)
-            if is_wildcard and rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in details:
-                raise _CurrentDayWildcardNotSupported(details) from rpc_err
-            # Re-raise so transient errors retry and fatal errors abort the day,
-            # preventing corrupted or incomplete open-interest data from being permanently saved.
-            raise
+            self._handle_options_rpc_error(rpc_err, trade_date, wildcard=is_wildcard)
         return df
 
     @retry(

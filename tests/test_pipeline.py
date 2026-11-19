@@ -1087,6 +1087,117 @@ class MockCliTests(unittest.TestCase):
             self.assertAlmostEqual(saved["mid"][0], 10.2)
             self.assertAlmostEqual(saved["vega_per_pct"][0], 0.025)
 
+    def test_current_day_per_expiration_oi_error_maps_to_not_ready(self) -> None:
+        """When per-expiration open-interest fails with current-day data error, download_day must return not_ready."""
+        trade_date = datetime.date(2026, 11, 18)
+        now_et = datetime.datetime(2026, 11, 18, 18, 0, tzinfo=ZoneInfo("America/New_York"))
+        exp1 = datetime.date(2026, 12, 18)
+        rpc_err = self._make_current_day_rpc_error()
+
+        mock_client = mock.MagicMock()
+        mock_client.option_list_expirations.return_value = pl.DataFrame(
+            {"expiration": [exp1.isoformat()]}
+        )
+
+        def fake_greeks_eod(**kwargs):
+            if kwargs["expiration"] == "*":
+                raise rpc_err
+            return pl.DataFrame({
+                "symbol": ["SPY"],
+                "expiration": [exp1.isoformat()],
+                "strike": [500.0],
+                "right": ["CALL"],
+                "bid": [10.0],
+                "ask": [10.4],
+                "close": [10.2],
+                "vega": [2.5],
+                "rho": [0.4],
+                "delta": [0.55],
+                "implied_vol": [0.16],
+                "underlying_price": [505.0],
+            })
+
+        mock_client.option_history_greeks_eod.side_effect = fake_greeks_eod
+        mock_client.option_history_open_interest.side_effect = rpc_err
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = DownloadConfig(
+                symbols=["SPY"],
+                data_dir=Path(tmp),
+                sync_to_gdrive=False,
+                max_dte=150,
+            )
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+            with (
+                mock.patch.object(dl, "_get_thread_client", return_value=mock_client),
+                mock.patch("datetime.datetime", self._make_fake_datetime(now_et)),
+            ):
+                res_date, rows, status = dl.download_day("SPY", trade_date)
+
+            self.assertEqual(res_date, trade_date)
+            self.assertEqual(rows, 0)
+            self.assertEqual(status, "not_ready")
+
+    def test_current_day_wildcard_oi_error_triggers_per_expiration_fallback(self) -> None:
+        """When wildcard open-interest fails with current-day data error, wildcard fallback must be triggered."""
+        trade_date = datetime.date(2026, 11, 18)
+        now_et = datetime.datetime(2026, 11, 18, 18, 0, tzinfo=ZoneInfo("America/New_York"))
+        exp1 = datetime.date(2026, 12, 18)
+        rpc_err = self._make_current_day_rpc_error()
+
+        mock_client = mock.MagicMock()
+        mock_client.option_list_expirations.return_value = pl.DataFrame(
+            {"expiration": [exp1.isoformat()]}
+        )
+
+        def fake_greeks_eod(**kwargs):
+            return pl.DataFrame({
+                "symbol": ["SPY"],
+                "expiration": [exp1.isoformat()],
+                "strike": [500.0],
+                "right": ["CALL"],
+                "bid": [10.0],
+                "ask": [10.4],
+                "close": [10.2],
+                "vega": [2.5],
+                "rho": [0.4],
+                "delta": [0.55],
+                "implied_vol": [0.16],
+                "underlying_price": [505.0],
+            })
+
+        def fake_oi(**kwargs):
+            if kwargs["expiration"] == "*":
+                raise rpc_err
+            return pl.DataFrame({
+                "symbol": ["SPY"],
+                "expiration": [exp1.isoformat()],
+                "strike": [500.0],
+                "right": ["CALL"],
+                "open_interest": [1200],
+            })
+
+        mock_client.option_history_greeks_eod.side_effect = fake_greeks_eod
+        mock_client.option_history_open_interest.side_effect = fake_oi
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = DownloadConfig(
+                symbols=["SPY"],
+                data_dir=Path(tmp),
+                sync_to_gdrive=False,
+                max_dte=150,
+            )
+            dl = ThetaOptionsDownloader(config=cfg, client=mock_client)
+            with (
+                mock.patch.object(dl, "_get_thread_client", return_value=mock_client),
+                mock.patch("datetime.datetime", self._make_fake_datetime(now_et)),
+            ):
+                res_date, rows, status = dl.download_day("SPY", trade_date)
+
+            self.assertEqual(res_date, trade_date)
+            self.assertEqual(status, "saved")
+            self.assertEqual(rows, 1)
+
     def test_gdrive_ensure_subfolder_caches_all_siblings(self) -> None:
         """ensure_subfolder caches every sibling folder returned by list_children."""
         from options_data.gdrive_sync import FOLDER_MIME_TYPE, GoogleDriveSync
