@@ -170,17 +170,31 @@ def normalize_options_df(
     if "bid" in df.columns and "ask" in df.columns:
         derived.append(((pl.col("bid") + pl.col("ask")) * 0.5).alias("mid"))
         derived.append((pl.col("ask") - pl.col("bid")).alias("spread"))
-    if "vega" in df.columns and "vega_per_pct" not in df.columns:
+    if "vega" in df.columns:
         # ThetaData raw vega is the mathematical Black-Scholes derivative dV/dSigma (100% vol change).
         # Standard convention measures sensitivity per 1 percentage point move in IV (dV / 100).
-        derived.append((pl.col("vega") / 100.0).alias("vega_per_pct"))
-    if "rho" in df.columns and "rho_per_pct" not in df.columns:
+        derived.append(
+            pl.coalesce(pl.col("vega_per_pct"), pl.col("vega") / 100.0).alias("vega_per_pct")
+            if "vega_per_pct" in df.columns
+            else (pl.col("vega") / 100.0).alias("vega_per_pct")
+        )
+    if "rho" in df.columns:
         # ThetaData raw rho is mathematical dV/dr (100% interest rate shift).
         # Standard convention measures sensitivity per 1 percentage point move in rate (dV / 100).
-        derived.append((pl.col("rho") / 100.0).alias("rho_per_pct"))
-    if "open_interest" in df.columns and "open_interest_prior_close" not in df.columns:
+        derived.append(
+            pl.coalesce(pl.col("rho_per_pct"), pl.col("rho") / 100.0).alias("rho_per_pct")
+            if "rho_per_pct" in df.columns
+            else (pl.col("rho") / 100.0).alias("rho_per_pct")
+        )
+    if "open_interest" in df.columns:
         # OPRA daily OI is published at ~06:30 ET representing the prior session's close.
-        derived.append(pl.col("open_interest").alias("open_interest_prior_close"))
+        derived.append(
+            pl.coalesce(pl.col("open_interest_prior_close"), pl.col("open_interest")).alias(
+                "open_interest_prior_close"
+            )
+            if "open_interest_prior_close" in df.columns
+            else pl.col("open_interest").alias("open_interest_prior_close")
+        )
 
     if derived:
         df = df.with_columns(derived)

@@ -67,6 +67,10 @@ class CurrentDayNotReadyError(Exception):
     """Raised when requesting current-day EOD data before market close or report generation."""
 
 
+class _CurrentDayWildcardNotSupported(Exception):
+    """Raised when ThetaData rejects wildcard expiration='*' for today's date."""
+
+
 def nyse_today() -> datetime.date:
     """Session calendar date. ThetaData EOD is stamped in America/New_York, not UTC."""
     return datetime.datetime.now(ZoneInfo("America/New_York")).date()
@@ -153,6 +157,8 @@ class DownloadConfig:
     annual_dividend_amount: float | None = None
     option_use_nbbo: bool = True
     underlyer_use_nbbo: bool = False
+    # Standard repository invariant: default max Days-to-Expiration is 150 days (~5 months).
+    # Some historical baseline files contain preserved contracts > 150 DTE, but pipeline defaults enforce 150.
     max_dte: int | None = 150
     strike_range: int | None = 50
     binomial_steps: int = 101
@@ -183,6 +189,7 @@ class ThetaOptionsDownloader:
             if config.sync_to_gdrive and config.gdrive_folder_id
             else None
         )
+        self._calendar_cache: dict[int, set[datetime.date]] = {}
         self.main_client = client or self._create_client()
 
     def _apply_rpc_timeout(self, client: ThetaClient) -> None:
@@ -264,27 +271,31 @@ class ThetaOptionsDownloader:
         client = self.main_client
 
         for year in range(start_date.year, end_date.year + 1):
-            full_close_dates: set[datetime.date] = set()
-            try:
-                cal_df = client.calendar_year(str(year))
-                if not cal_df.is_empty() and "date" in cal_df.columns:
-                    cal_df = cal_df.with_columns(
-                        date_expr("date", cal_df.schema["date"]).alias("date")
-                    )
-
-                    if "type" in cal_df.columns:
-                        closed = cal_df.filter(
-                            pl.col("type").cast(pl.Utf8).str.to_lowercase() == "full_close"
+            if year in self._calendar_cache:
+                full_close_dates = self._calendar_cache[year]
+            else:
+                full_close_dates = set()
+                try:
+                    cal_df = client.calendar_year(str(year))
+                    if not cal_df.is_empty() and "date" in cal_df.columns:
+                        cal_df = cal_df.with_columns(
+                            date_expr("date", cal_df.schema["date"]).alias("date")
                         )
-                        for d in closed["date"].to_list():
-                            if isinstance(d, datetime.date):
-                                full_close_dates.add(d)
-            except Exception as exc:
-                logger.warning(
-                    "calendar_year(%s) failed (%s); using default NYSE weekday schedule.",
-                    year,
-                    exc,
-                )
+
+                        if "type" in cal_df.columns:
+                            closed = cal_df.filter(
+                                pl.col("type").cast(pl.Utf8).str.to_lowercase() == "full_close"
+                            )
+                            for d in closed["date"].to_list():
+                                if isinstance(d, datetime.date):
+                                    full_close_dates.add(d)
+                    self._calendar_cache[year] = full_close_dates
+                except Exception as exc:
+                    logger.warning(
+                        "calendar_year(%s) failed (%s); using default NYSE weekday schedule.",
+                        year,
+                        exc,
+                    )
 
             cur = max(start_date, datetime.date(year, 1, 1))
             yr_end = min(end_date, datetime.date(year, 12, 31))
@@ -318,34 +329,55 @@ class ThetaOptionsDownloader:
             / f"{sym}_{year}.parquet"
         )
 
-    @retry(
-        retry=retry_if_exception(_is_transient_rpc_error),
-        wait=wait_exponential(multiplier=1.0, min=1.0, max=15.0),
-        stop=stop_after_attempt(5),
-        reraise=True,
-    )
-    def _fetch_single_day_options(
+    def _build_div_kwargs(self) -> dict[str, float]:
+        """Return dividend keyword arguments for ThetaData Greeks requests."""
+        cfg = self.config
+        if cfg.annual_dividend is not None:
+            return {"annual_dividend": cfg.annual_dividend}
+        if cfg.annual_dividend_amount is not None:
+            return {"annual_dividend_amount": cfg.annual_dividend_amount}
+        return {}
+
+    def _handle_options_rpc_error(
         self,
-        symbol: str,
+        rpc_err: grpc.RpcError,
+        trade_date: datetime.date,
+        *,
+        wildcard: bool,
+    ) -> None:
+        """Handle gRPC errors for options EOD/Greeks/OI RPCs before retrying or falling back."""
+        if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
+            self._reauthenticate(force=True)
+            raise rpc_err
+        details = str(rpc_err.details() if hasattr(rpc_err, "details") else rpc_err)
+        if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in details.lower():
+            if wildcard:
+                raise _CurrentDayWildcardNotSupported(details) from rpc_err
+            raise CurrentDayNotReadyError(
+                f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {details}"
+            ) from rpc_err
+        raise rpc_err
+
+    def _fetch_greeks_or_eod_frame(
+        self,
+        client: ThetaClient,
+        opt_root: str,
+        expiration: datetime.date | str,
         trade_date: datetime.date,
     ) -> pl.DataFrame:
-        """Fetch EOD + Greeks (+ Open Interest) for all expirations on `trade_date`."""
-        client = self._get_thread_client()
+        """Fetch raw EOD (+ Greeks) frame for either wildcard or a specific expiration."""
         cfg = self.config
-        opt_root = to_option_root(symbol)
-        df = pl.DataFrame()
-
-        div_kwargs: dict[str, float] = {}
-        if cfg.annual_dividend is not None:
-            div_kwargs["annual_dividend"] = cfg.annual_dividend
-        elif cfg.annual_dividend_amount is not None:
-            div_kwargs["annual_dividend_amount"] = cfg.annual_dividend_amount
+        is_wildcard = expiration == "*"
+        dte_kwargs: dict[str, int] = (
+            {"max_dte": cfg.max_dte} if is_wildcard and cfg.max_dte is not None else {}
+        )
+        div_kwargs = self._build_div_kwargs()
 
         try:
             if cfg.greeks_model == "bs":
-                df = client.option_history_greeks_eod(
+                return client.option_history_greeks_eod(
                     symbol=opt_root,
-                    expiration="*",
+                    expiration=expiration,
                     start_date=trade_date,
                     end_date=trade_date,
                     strike="*",
@@ -353,14 +385,14 @@ class ThetaOptionsDownloader:
                     rate_type=cfg.rate_type,
                     underlyer_use_nbbo=cfg.underlyer_use_nbbo,
                     option_use_nbbo=cfg.option_use_nbbo,
-                    max_dte=cfg.max_dte,
                     strike_range=cfg.strike_range,
+                    **dte_kwargs,
                     **div_kwargs,
                 )
-            elif cfg.greeks_model == "binomial":
-                df = client.option_history_binomial_greeks_eod(
+            if cfg.greeks_model == "binomial":
+                return client.option_history_binomial_greeks_eod(
                     symbol=opt_root,
-                    expiration="*",
+                    expiration=expiration,
                     start_date=trade_date,
                     end_date=trade_date,
                     strike="*",
@@ -369,103 +401,210 @@ class ThetaOptionsDownloader:
                     binomial_steps=cfg.binomial_steps,
                     underlyer_use_nbbo=cfg.underlyer_use_nbbo,
                     option_use_nbbo=cfg.option_use_nbbo,
-                    max_dte=cfg.max_dte,
                     strike_range=cfg.strike_range,
+                    **dte_kwargs,
                     **div_kwargs,
                 )
-            else:
-                df = client.option_history_eod(
+            return client.option_history_eod(
+                symbol=opt_root,
+                expiration=expiration,
+                start_date=trade_date,
+                end_date=trade_date,
+                strike="*",
+                right="both",
+                strike_range=cfg.strike_range,
+                **dte_kwargs,
+            )
+        except grpc.RpcError as rpc_err:
+            self._handle_options_rpc_error(rpc_err, trade_date, wildcard=is_wildcard)
+        except NoDataFoundError:
+            if cfg.greeks_model == "none" or not cfg.fallback_eod_if_no_greeks:
+                return pl.DataFrame()
+            try:
+                return client.option_history_eod(
                     symbol=opt_root,
-                    expiration="*",
+                    expiration=expiration,
                     start_date=trade_date,
                     end_date=trade_date,
                     strike="*",
                     right="both",
-                    max_dte=cfg.max_dte,
                     strike_range=cfg.strike_range,
+                    **dte_kwargs,
                 )
-        except grpc.RpcError as rpc_err:
-            if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
-                self._reauthenticate(force=True)
-                raise rpc_err
-            if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in str(rpc_err.details()):
-                raise CurrentDayNotReadyError(
-                    f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {rpc_err.details()}"
-                )
-            raise rpc_err
-        except NoDataFoundError:
-            if cfg.greeks_model != "none" and cfg.fallback_eod_if_no_greeks:
-                try:
-                    df = client.option_history_eod(
-                        symbol=opt_root,
-                        expiration="*",
-                        start_date=trade_date,
-                        end_date=trade_date,
-                        strike="*",
-                        right="both",
-                        max_dte=cfg.max_dte,
-                        strike_range=cfg.strike_range,
-                    )
-                except grpc.RpcError as rpc_err:
-                    if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
-                        self._reauthenticate(force=True)
-                        raise rpc_err
-                    if rpc_err.code() == grpc.StatusCode.INVALID_ARGUMENT and "current-day data" in str(rpc_err.details()):
-                        raise CurrentDayNotReadyError(
-                            f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {rpc_err.details()}"
-                        )
-                    raise rpc_err
-                except NoDataFoundError:
-                    return pl.DataFrame()
-            else:
+            except grpc.RpcError as rpc_err:
+                self._handle_options_rpc_error(rpc_err, trade_date, wildcard=is_wildcard)
+            except NoDataFoundError:
                 return pl.DataFrame()
+        return pl.DataFrame()
 
+    def _attach_open_interest(
+        self,
+        client: ThetaClient,
+        df: pl.DataFrame,
+        symbol: str,
+        opt_root: str,
+        expiration: datetime.date | str,
+        trade_date: datetime.date,
+    ) -> pl.DataFrame:
+        """Fetch and left-join daily Open Interest onto a normalized options DataFrame."""
+        cfg = self.config
+        if not cfg.include_open_interest:
+            return df
+        is_wildcard = expiration == "*"
+        dte_kwargs: dict[str, int] = (
+            {"max_dte": cfg.max_dte} if is_wildcard and cfg.max_dte is not None else {}
+        )
+        # The value published on `trade_date` is the prior session's open interest
+        # (OPRA reports it around 06:30 ET). It is the figure known during this
+        # session, not the open interest at this session's close.
+        try:
+            oi_df = client.option_history_open_interest(
+                symbol=opt_root,
+                expiration=expiration,
+                date=trade_date,
+                strike="*",
+                right="both",
+                strike_range=cfg.strike_range,
+                **dte_kwargs,
+            )
+            if not oi_df.is_empty():
+                if "symbol" in oi_df.columns:
+                    oi_df = oi_df.with_columns(pl.lit(symbol).alias("symbol"))
+                oi_df = normalize_options_df(oi_df, trade_date=trade_date)
+                join_keys = ["symbol", "expiration", "strike", "right"]
+                if all(k in oi_df.columns for k in join_keys) and "open_interest" in oi_df.columns:
+                    oi_subset = (
+                        oi_df.select(join_keys + ["open_interest"])
+                        .unique(subset=join_keys, keep="last")
+                    )
+                    for col in ("open_interest", "open_interest_prior_close"):
+                        if col in df.columns:
+                            df = df.drop(col)
+                    df = df.join(oi_subset, on=join_keys, how="left")
+                    df = normalize_options_df(df, trade_date=trade_date)
+        except NoDataFoundError:
+            pass
+        except grpc.RpcError as rpc_err:
+            self._handle_options_rpc_error(rpc_err, trade_date, wildcard=is_wildcard)
+        return df
+
+    @retry(
+        retry=retry_if_exception(_is_transient_rpc_error),
+        wait=wait_exponential(multiplier=1.0, min=1.0, max=15.0),
+        stop=stop_after_attempt(5),
+        reraise=True,
+    )
+    def _fetch_single_day_options_wildcard(
+        self,
+        symbol: str,
+        opt_root: str,
+        trade_date: datetime.date,
+    ) -> pl.DataFrame:
+        """Fetch EOD + Greeks (+ Open Interest) using wildcard expiration='*'."""
+        client = self._get_thread_client()
+        df = self._fetch_greeks_or_eod_frame(client, opt_root, "*", trade_date)
         if df.is_empty():
             return df
-
         if "symbol" in df.columns:
             df = df.with_columns(pl.lit(symbol).alias("symbol"))
         df = normalize_options_df(df, trade_date=trade_date)
+        return self._attach_open_interest(client, df, symbol, opt_root, "*", trade_date)
 
-        if cfg.include_open_interest:
-            # The value published on `trade_date` is the prior session's open interest
-            # (OPRA reports it around 06:30 ET). It is the figure known during this
-            # session, not the open interest at this session's close.
-            try:
-                oi_df = client.option_history_open_interest(
-                    symbol=opt_root,
-                    expiration="*",
-                    date=trade_date,
-                    strike="*",
-                    right="both",
-                    max_dte=cfg.max_dte,
-                    strike_range=cfg.strike_range,
-                )
-                if not oi_df.is_empty():
-                    if "symbol" in oi_df.columns:
-                        oi_df = oi_df.with_columns(pl.lit(symbol).alias("symbol"))
-                    oi_df = normalize_options_df(oi_df, trade_date=trade_date)
-                    join_keys = ["symbol", "expiration", "strike", "right"]
-                    if all(k in oi_df.columns for k in join_keys) and "open_interest" in oi_df.columns:
-                        oi_subset = (
-                            oi_df.select(join_keys + ["open_interest"])
-                            .unique(subset=join_keys, keep="last")
-                        )
-                        for col in ("open_interest", "open_interest_prior_close"):
-                            if col in df.columns:
-                                df = df.drop(col)
-                        df = df.join(oi_subset, on=join_keys, how="left")
-                        df = normalize_options_df(df, trade_date=trade_date)
-            except NoDataFoundError:
-                pass
-            except grpc.RpcError as rpc_err:
-                if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
-                    self._reauthenticate(force=True)
-                # Re-raise so transient errors retry and fatal errors abort the day,
-                # preventing corrupted or incomplete open-interest data from being permanently saved.
-                raise
+    @retry(
+        retry=retry_if_exception(_is_transient_rpc_error),
+        wait=wait_exponential(multiplier=1.0, min=1.0, max=15.0),
+        stop=stop_after_attempt(5),
+        reraise=True,
+    )
+    def _list_option_expirations(self, opt_root: str) -> list[datetime.date]:
+        """List all option expiration dates for `opt_root`."""
+        client = self._get_thread_client()
+        try:
+            exp_df = client.option_list_expirations(opt_root)
+        except grpc.RpcError as rpc_err:
+            if rpc_err.code() == grpc.StatusCode.UNAUTHENTICATED:
+                self._reauthenticate(force=True)
+            raise
+        except NoDataFoundError:
+            return []
 
-        return df
+        if exp_df.is_empty() or "expiration" not in exp_df.columns:
+            return []
+        parsed = exp_df.select(
+            date_expr("expiration", exp_df.schema["expiration"]).alias("expiration")
+        ).drop_nulls()
+        return sorted({d for d in parsed["expiration"].to_list() if isinstance(d, datetime.date)})
+
+    @retry(
+        retry=retry_if_exception(_is_transient_rpc_error),
+        wait=wait_exponential(multiplier=1.0, min=1.0, max=15.0),
+        stop=stop_after_attempt(5),
+        reraise=True,
+    )
+    def _fetch_single_expiration_options(
+        self,
+        symbol: str,
+        opt_root: str,
+        expiration: datetime.date,
+        trade_date: datetime.date,
+    ) -> pl.DataFrame:
+        """Fetch EOD + Greeks (+ Open Interest) for one explicit `expiration` on `trade_date`."""
+        client = self._get_thread_client()
+        df = self._fetch_greeks_or_eod_frame(client, opt_root, expiration, trade_date)
+        if df.is_empty():
+            return df
+        if "symbol" in df.columns:
+            df = df.with_columns(pl.lit(symbol).alias("symbol"))
+        df = normalize_options_df(df, trade_date=trade_date)
+        return self._attach_open_interest(client, df, symbol, opt_root, expiration, trade_date)
+
+    def _fetch_single_day_options_by_expiration(
+        self,
+        symbol: str,
+        opt_root: str,
+        trade_date: datetime.date,
+    ) -> pl.DataFrame:
+        """Fetch current-day EOD + Greeks + OI expiration-by-expiration when wildcard '*' is disallowed."""
+        cfg = self.config
+        expirations = self._list_option_expirations(opt_root)
+        max_exp = (
+            trade_date + datetime.timedelta(days=cfg.max_dte)
+            if cfg.max_dte is not None
+            else None
+        )
+        valid_exps = [
+            e
+            for e in expirations
+            if e >= trade_date and (max_exp is None or e <= max_exp)
+        ]
+        frames: list[pl.DataFrame] = []
+        for exp in valid_exps:
+            frame = self._fetch_single_expiration_options(symbol, opt_root, exp, trade_date)
+            if not frame.is_empty():
+                frames.append(frame)
+
+        if not frames:
+            return pl.DataFrame()
+        if len(frames) == 1:
+            return frames[0]
+        return normalize_options_df(pl.concat(frames, how="diagonal_relaxed"), trade_date=trade_date)
+
+    def _fetch_single_day_options(
+        self,
+        symbol: str,
+        trade_date: datetime.date,
+    ) -> pl.DataFrame:
+        """Fetch EOD + Greeks (+ Open Interest) for all expirations on `trade_date`."""
+        opt_root = to_option_root(symbol)
+        try:
+            return self._fetch_single_day_options_wildcard(symbol, opt_root, trade_date)
+        except _CurrentDayWildcardNotSupported as exc:
+            now_et = datetime.datetime.now(ZoneInfo("America/New_York"))
+            if (trade_date == now_et.date() and now_et.time() < datetime.time(17, 30)) or trade_date > now_et.date():
+                raise CurrentDayNotReadyError(
+                    f"ThetaData current-day EOD not ready for {trade_date} (usually available after 17:15 ET): {exc}"
+                ) from exc
+            return self._fetch_single_day_options_by_expiration(symbol, opt_root, trade_date)
 
     def download_day(self, symbol: str, trade_date: datetime.date) -> tuple[datetime.date, int, str]:
         """Download a single trading day for `symbol` and save to Parquet."""
