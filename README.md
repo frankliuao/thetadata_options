@@ -10,6 +10,13 @@ A production-grade, fault-tolerant Python ETL pipeline and interactive analytics
 
 Designed specifically for quantitative researchers, algorithmic traders, and financial engineers who require clean, standardized, point-in-time options data for backtesting options strategies (cash-secured puts, covered calls, calendar spreads, dispersion, volatility trading) without suffering from vendor SDK timeouts, silent data dropouts, or unscaled Greeks.
 
+> [!IMPORTANT]
+> **Bring Your Own ThetaData Account — No Market Data Included**
+>
+> This repository provides **ETL pipeline and visualization code only** and does **not** bundle or redistribute any historical options or equity market data (in compliance with OPRA and ThetaData redistribution policies).
+> - **Self-Download Required**: To build your local Parquet lakehouse and analyze real market data, you must use **your own active [ThetaData](https://thetadata.net/) subscription and API key** (**Standard** or **Pro** tier is required for historical Greeks and Open Interest; the Value tier provides basic quotes only) and run `download-options` yourself.
+> - **Try Without an Account**: You can explore the dashboard UI immediately via the [Live Static Demo](https://frankliuao.github.io/thetadata_options/) (powered by synthetic Black-Scholes data in `docs/sample_data/`), or verify the pipeline offline with `poetry run download-options --mock-test`.
+
 ---
 
 ## 🌟 Key Highlights & Engineering Features
@@ -57,7 +64,7 @@ Use `--universe {active,current,removed_active,all}` in CLI commands to select y
 ### Prerequisites
 - Python **3.12+** (Tested on Python 3.12 and 3.13)
 - [Poetry](https://python-poetry.org/) (recommended) or `pip`
-- A valid [ThetaData](https://thetadata.net/) subscription (**Standard** or **Pro** tier required for historical Greeks and Open Interest; Value tier only provides basic quotes)
+- Your own active [ThetaData](https://thetadata.net/) account & API key (**Standard** or **Pro** tier required for historical Greeks and Open Interest; Value tier only provides basic quotes) — **historical market data is not bundled in this repository and must be downloaded with your own credentials**
 
 ### 1. Clone Repository & Install Dependencies
 
@@ -261,9 +268,9 @@ Inspect point-in-time tabular records with 1-click **CSV Download** and per-row 
 
 ## ☁️ Google Drive & Hybrid Cloud Storage Workflows
 
-The full 11-year (2016–2026) consolidated S&P 500 options archive is **~51 GB** across 5,892 yearly `.parquet` files (`symbol=<SYM>/<SYM>_<YEAR>.parquet`), where each single symbol-year file is only **5 MB – 15 MB**.
+Once you download the full 11-year (2016–2026) S&P 500 options dataset using your own ThetaData account and back it up to your personal Google Drive, the consolidated archive is **~51 GB** across ~5,892 yearly `.parquet` files (`symbol=<SYM>/<SYM>_<YEAR>.parquet`), where each single symbol-year file is only **5 MB – 15 MB**.
 
-**You do NOT need to download all 51 GB locally**. Choose any of the following storage workflows:
+**You do NOT need to keep all 51 GB on every machine locally** — once synced to your own Google Drive, choose any of the following storage workflows:
 
 ### Workflow 1: Google Drive for Desktop — "Stream Files" Mode (Mac / Windows)
 Zero CLI setup or API credentials required:
